@@ -1,0 +1,21 @@
+/* :root {
+  --cat-url: url('../../assets/sprites/cat/sitting.png');
+  --cat-frames: 4;
+}
+.cat-container {
+    width: 128px;
+    height: 128px;
+    background-size: calc(var(--cat-frames) * 128px) 128px; 
+    transform-origin: center;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    cursor: pointer;
+    animation: catAnimation 1s steps(var(--cat-frames)) infinite;
+    background-image: var(--cat-url);
+}
+@keyframes catAnimation {
+  from { background-position: 0px 0px; }
+  to { background-position: calc(var(--cat-frames) * -128px) 0px; }
+} */

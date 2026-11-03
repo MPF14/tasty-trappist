@@ -1,0 +1,21 @@
+/* :root {
+  --chick-url: url('../../assets/sprites/chick/sitting.png');
+  --chick-frames: 4;
+}
+.chick-container {
+    width: 128px;
+    height: 128px;
+    background-size: calc(var(--chick-frames) * 128px) 128px; 
+    transform-origin: center;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    cursor: pointer;
+    animation: chickAnimation 1s steps(var(--chick-frames)) infinite;
+    background-image: var(--chick-url);
+}
+@keyframes chickAnimation {
+  from { background-position: 0px 0px; }
+  to { background-position: calc(var(--chick-frames) * -128px) 0px; }
+} */

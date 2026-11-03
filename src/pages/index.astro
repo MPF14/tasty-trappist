@@ -1,11 +1,42 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import "../styles/main.css";
+import "../styles/components/collors.css";
+import "../styles/components/cat.css";
+import "../styles/components/chick.css";
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>matikda</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 5' shape-rendering='crispEdges'%3E%3Cpath fill='%23ef476f' d='M0 0h1v1H0z M4 1h1v1H4z M3 2h1v1H3z M2 3h1v1H2z M1 4h1v1H1z'/%3E%3Cpath fill='%23ff9f1c' d='M1 0h1v1H1z M0 1h1v1H0z M4 2h1v1H4z M3 3h1v1H3z M2 4h1v1H2z'/%3E%3Cpath fill='%23ffd166' d='M2 0h1v1H2z M1 1h1v1H1z M0 2h1v1H0z M4 3h1v1H4z M3 4h1v1H3z'/%3E%3Cpath fill='%2306d6a0' d='M3 0h1v1H3z M2 1h1v1H2z M1 2h1v1H1z M0 3h1v1H0z M4 4h1v1H4z'/%3E%3Cpath fill='%23118ab2' d='M4 0h1v1H4z M3 1h1v1H3z M2 2h1v1H2z M1 3h1v1H1z M0 4h1v1H0z'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <header class="site-header">
+      <a href="/" class="site-title">i &lt;3 hot moms</a>
+      <nav aria-label="Main navigation">
+        <a href="/">your moms house</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="world">
+        <canvas id="world"></canvas>
+        <div class="overlay">
+          <h1>.</h1>
+          <p>.</p>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      import "../scripts/main.js";
+    </script>
+  </body>
+</html>

@@ -1,1 +1,4 @@
 @import "tailwindcss";
+@import "./palette.css";
+@import "./theme.css";
+@import "./main.css";

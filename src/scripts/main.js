@@ -51,6 +51,10 @@ canvas.addEventListener("click", (event) => {
 let lastTime = 0;
 
 function update(timestamp) {
+    const background = getComputedStyle(document.documentElement)
+        .getPropertyValue("--theme-bg-300")
+        .trim();
+
 
     // Calculate elapsed time
     const deltaTime = lastTime
@@ -63,7 +67,7 @@ function update(timestamp) {
     catAnimation.update(deltaTime);
 
     // Draw world
-    renderer.clear("#d8d0bd");
+    renderer.clear(background);
 
     renderer.drawSprite(
     cat,

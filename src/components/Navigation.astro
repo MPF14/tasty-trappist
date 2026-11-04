@@ -1,0 +1,67 @@
+
+---
+const currentPath = Astro.url.pathname;
+
+const links = [
+    { label: "your moms hous", href: "/" },
+    { label: "photos", href: "/photos" },
+    { label: "palettes", href: "/palette-generator" },
+    { label: "jay son", href: "/palette-generator-json" },
+    { label: "sprites", href: "/sprite-converter" },
+];
+---
+
+<header class="site-header">
+    <a href="/" class="site-title">i &lt;3 hot moms</a>
+
+    <nav>
+        {links.map((link) => (
+            <a
+                href={link.href}
+                class:list={[
+                    "nav-link",
+                    { active: currentPath === link.href }
+                ]}
+            >
+                {link.label}
+            </a>
+        ))}
+
+        
+    </nav>
+</header>
+
+<script>
+    const selector = document.querySelector<HTMLSelectElement>(
+        "#theme-selector"
+    );
+
+    if (selector) {
+        const themeSelect = selector;
+        const savedTheme = localStorage.getItem("theme") || "april-shower";
+
+        themeSelect.value = savedTheme;
+
+        function resizeThemeSelector() {
+            const selectedText = themeSelect.selectedOptions[0]?.text ?? "";
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
+
+            if (!context) return;
+
+            context.font = getComputedStyle(themeSelect).font;
+            const textWidth = context.measureText(selectedText).width;
+            themeSelect.style.width = `${textWidth + 25}px`;
+        }
+
+        themeSelect.addEventListener("change", resizeThemeSelector);
+        resizeThemeSelector();
+
+        themeSelect.addEventListener("change", () => {
+            const theme = themeSelect.value;
+
+            document.documentElement.setAttribute("data-theme", theme);
+            localStorage.setItem("theme", theme);
+        });
+    }
+</script>

@@ -1,42 +1,61 @@
 ---
-import "../styles/main.css";
-import "../styles/components/collors.css";
-import "../styles/components/cat.css";
-import "../styles/components/chick.css";
+import Layout from "../layouts/Layout.astro";
+import Navigation from "../components/Navigation.astro";
+import World from "../components/World.astro";
+
+
+const themes = [
+    { name: "april-shower", label: "april-shower" },
+    { name: "winter", label: "winter" },
+    { name: "spring", label: "spring" },
+    { name: "autumn", label: "autumn" },
+    { name: "summer", label: "summer" },
+    { name: "june", label: "june" },
+    { name: "academia", label: "academia" },
+    { name: "rainy-day", label: "rainy-day" },
+    { name: "library", label: "library" },
+    { name: "flowers", label: "flowers" },
+    { name: "bright", label: "bright" },
+    { name: "roses", label: "roses" }
+];
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>matikda</title>
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 5' shape-rendering='crispEdges'%3E%3Cpath fill='%23ef476f' d='M0 0h1v1H0z M4 1h1v1H4z M3 2h1v1H3z M2 3h1v1H2z M1 4h1v1H1z'/%3E%3Cpath fill='%23ff9f1c' d='M1 0h1v1H1z M0 1h1v1H0z M4 2h1v1H4z M3 3h1v1H3z M2 4h1v1H2z'/%3E%3Cpath fill='%23ffd166' d='M2 0h1v1H2z M1 1h1v1H1z M0 2h1v1H0z M4 3h1v1H4z M3 4h1v1H3z'/%3E%3Cpath fill='%2306d6a0' d='M3 0h1v1H3z M2 1h1v1H2z M1 2h1v1H1z M0 3h1v1H0z M4 4h1v1H4z'/%3E%3Cpath fill='%23118ab2' d='M4 0h1v1H4z M3 1h1v1H3z M2 2h1v1H2z M1 3h1v1H1z M0 4h1v1H0z'/%3E%3C/svg%3E"
-    />
-  </head>
-  <body>
-    <header class="site-header">
-      <a href="/" class="site-title">i &lt;3 hot moms</a>
-      <nav aria-label="Main navigation">
-        <a href="/">your moms house</a>
-      </nav>
-    </header>
+<Layout title="matikda">
+  <Navigation />
 
-    <main>
-      <div class="world">
-        <canvas id="world"></canvas>
-        <div class="overlay">
-          <h1>.</h1>
-          <p>.</p>
-        </div>
-      </div>
-    </main>
+  <main>
+    <World />
+  </main>
+  <select id="theme-selector" aria-label="Select theme">
+            {themes.map((theme) => (
+                <option value={theme.name}>
+                    {theme.label}
+                </option>
+            ))}
+        </select>
 
-    <script>
-      import "../scripts/main.js";
-    </script>
-  </body>
-</html>
+</Layout>
+
+<style>
+    
+    #theme-selector {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 1000;
+        box-shadow: 0 0;
+        padding: 0 0;
+        border: 0;
+        color: var(--theme-accent-400);
+        width: auto;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+    #theme-selector:hover {
+        color: var(--theme-accent-600);
+    }
+    #theme-selector:focus {
+        color: var(--theme-accent-600);
+        outline: none;
+    }
+</style>

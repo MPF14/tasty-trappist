@@ -1,52 +1,68 @@
-:root {
-  --page-bg: #f6f0e6;
-  --text: #302c35;
-  --accent: #81749b;
-  --content-width: 900px;
-}
-
 body {
-  margin: 0;
-  background: var(--page-bg);
-  color: var(--text);
-  font-family: system-ui, sans-serif;
-  overflow: hidden;
+  background: var(--theme-bg-300);
+  color: var(--theme-text-600);
+  font-family: monospace;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: stretch;
 }
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
 
-a {
-  color: inherit;
+.world {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+#world {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
 }
 
 .site-header {
-  max-width: var(--content-width);
+  width: 100%;
+  max-width: none;
   margin: 0px;
   padding: 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  background: rgb(114, 156, 218);
+  background: var(--theme-card-300);
 }
 
 .site-title {
   font-weight: 700;
   text-decoration: none;
+  color: var(--theme-text-600);
+}
+
+.site-title:hover {
+  color: var(--theme-text-500);
 }
 
 nav {
   display: flex;
-  gap: 1rem;
+  gap: 2rem;
 }
 
 main {
   max-width: var(--content-width);
-  margin: 0 auto;
-  padding: 3rem 1.5rem;
+  margin: 0 0;
+  padding: 0 0;
 }
 
 .welcome {
@@ -65,41 +81,41 @@ main {
 
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-.world {
-    position: relative;
-
-    width: 640px;
-    height: 360px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* Canvas background */
 canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-
-    image-rendering: pixelated;
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  border-radius: 0;
 }
 
-/* Text overlay */
 .overlay {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-
-    color: white;
-    z-index: 1;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: var(--theme-textoncolor-400);
+  z-index: 1;
 }
 
-/* Button overlay */
-/* .world-button {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
+.nav-link {
+  color: var(--theme-textmuted-400);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
 
-    z-index: 2;
-} */
+.nav-link:hover {
+  color: var(--theme-primary-500);
+}
+
+.nav-link.active {
+  color: var(--theme-secondary-400);
+}
+
+.nav-link.active:hover {
+  color: var(--theme-secondary-600);
+}

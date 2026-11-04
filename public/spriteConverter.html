@@ -7,303 +7,303 @@
 <title>Pixel Sprite Converter</title>
 
 <style>
-* {
-    box-sizing: border-box;
-}
+    * {
+        box-sizing: border-box;
+    }
 
-body {
-    margin: 0;
-    padding: 30px;
-    background: #e9e3d8;
-    color: #37313d;
-    font-family: monospace;
-}
+    body {
+        margin: 0;
+        padding: 30px;
+        background: #e9e3d8;
+        color: #37313d;
+        font-family: monospace;
+    }
 
-main {
-    max-width: 900px;
-    margin: auto;
-}
+    main {
+        max-width: 900px;
+        margin: auto;
+    }
 
-section {
-    background: #f8f5ef;
-    padding: 20px;
-    margin: 20px 0;
-    border: 1px solid #c9c1b5;
-    border-radius: 8px;
-}
+    section {
+        background: #f8f5ef;
+        padding: 20px;
+        margin: 20px 0;
+        border: 1px solid #c9c1b5;
+        border-radius: 8px;
+    }
 
-h1, h2 {
-    margin-top: 0;
-}
+    h1, h2 {
+        margin-top: 0;
+    }
 
-label {
-    display: block;
-    margin: 12px 0 5px;
-}
+    label {
+        display: block;
+        margin: 12px 0 5px;
+    }
 
-input, select, button {
-    padding: 9px;
-    font: inherit;
-    margin: 0px;
-}
+    input, select, button {
+        padding: 9px;
+        font: inherit;
+        margin: 0px;
+    }
 
-input[type="number"] {
-    width: 90px;
-}
+    input[type="number"] {
+        width: 90px;
+    }
 
-button {
-    cursor: pointer;
-    background: #37313d;
-    color: white;
-    border: none;
-    border-radius: 4px;
-}
+    button {
+        cursor: pointer;
+        background: #37313d;
+        color: white;
+        border: none;
+        border-radius: 4px;
+    }
 
-button:hover {
-    background: #65566e;
-}
+    button:hover {
+        background: #65566e;
+    }
 
-.preview {
-    overflow: auto;
-    max-width: 100%;
-}
+    .preview {
+        overflow: auto;
+        max-width: 100%;
+    }
 
-canvas {
-    image-rendering: pixelated;
-    background-color: #d4cec3;
-    background-image:
-        linear-gradient(45deg, #bbb3a7 25%, transparent 25%),
-        linear-gradient(-45deg, #bbb3a7 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #bbb3a7 75%),
-        linear-gradient(-45deg, transparent 75%, #bbb3a7 75%);
-    background-size: 16px 16px;
-    background-position: 0 0, 0 8px, 8px -8px, -8px 0;
-}
+    canvas {
+        image-rendering: pixelated;
+        background-color: #d4cec3;
+        background-image:
+            linear-gradient(45deg, #bbb3a7 25%, transparent 25%),
+            linear-gradient(-45deg, #bbb3a7 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #bbb3a7 75%),
+            linear-gradient(-45deg, transparent 75%, #bbb3a7 75%);
+        background-size: 16px 16px;
+        background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    }
 
-.controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-}
+    .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
 
-.field {
-    display: flex;
-    flex-direction: column;
-}
+    .field {
+        display: flex;
+        flex-direction: column;
+    }
 
-textarea {
-    width: 100%;
-    height: 350px;
-    padding: 12px;
-    font: 12px monospace;
-    resize: vertical;
-}
+    textarea {
+        width: 100%;
+        height: 350px;
+        padding: 12px;
+        font: 12px monospace;
+        resize: vertical;
+    }
 
-#frameList {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 15px;
-    margin-bottom: 0px;
-}
+    #frameList {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 15px;
+        margin-bottom: 0px;
+    }
 
-.frame {
-    border: 2px solid transparent;
-    padding: 4px;
-    cursor: pointer;
-}
+    .frame {
+        border: 2px solid transparent;
+        padding: 4px;
+        cursor: pointer;
+    }
 
-.frame.active {
-    border-color: #a16caa;
-}
+    .frame.active {
+        border-color: #a16caa;
+    }
 
-.frame canvas {
-    display: block;
-    width: 80px;
-    height: 80px;
-}
+    .frame canvas {
+        display: block;
+        width: 80px;
+        height: 80px;
+    }
 
-.palette-entry {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px;
-    margin: 6px 0;
-    background: #eee9e1;
-    border-radius: 4px;
-}
+    .palette-entry {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px;
+        margin: 6px 0;
+        background: #eee9e1;
+        border-radius: 4px;
+    }
 
-.palette-entry input[type="text"] {
-    width: 55px;
-    text-align: center;
-    font-weight: bold;
-}
+    .palette-entry input[type="text"] {
+        width: 55px;
+        text-align: center;
+        font-weight: bold;
+    }
 
-.palette-entry input[type="color"] {
-    width: 55px;
-    height: 38px;
-    padding: 2px;
-    cursor: pointer;
-}
+    .palette-entry input[type="color"] {
+        width: 55px;
+        height: 38px;
+        padding: 2px;
+        cursor: pointer;
+    }
 
-.palette-entry .hex-label {
-    min-width: 80px;
-}
+    .palette-entry .hex-label {
+        min-width: 80px;
+    }
 
-.palette-entry button {
-    margin-left: auto;
-}
+    .palette-entry button {
+        margin-left: auto;
+    }
 
-.palette-empty {
-    color: #766e77;
-    padding: 10px 0;
-}
+    .palette-empty {
+        color: #766e77;
+        padding: 10px 0;
+    }
 
-small {
-    color: #766e77;
-}
+    small {
+        color: #766e77;
+    }
 </style>
 </head>
 
 <body>
 <main>
 
-<h1>Pixel Sprite Converter</h1>
-<p>Convert PNG sprite sheets into JavaScript animations.</p>
+    <h1>Pixel Sprite Converter</h1>
+    <p>Convert PNG sprite sheets into JavaScript animations.</p>
 
-<section>
-    <h2>1. Import sprite sheet</h2>
+    <section>
+        <h2>1. Import sprite sheet</h2>
 
-    <input type="file" id="upload" accept="image/png">
+        <input type="file" id="upload" accept="image/png">
 
-    <div class="preview">
-        <canvas id="sheetPreview"></canvas>
-    </div>
-
-    <p id="imageInfo">No image loaded.</p>
-</section>
-
-<section>
-    <h2>2. Configure frames</h2>
-
-    <div class="controls">
-        <div class="field">
-            <label>Frame width</label>
-            <input type="number" id="frameWidth" value="32" min="1">
+        <div class="preview">
+            <canvas id="sheetPreview"></canvas>
         </div>
 
-        <div class="field">
-            <label>Frame height</label>
-            <input type="number" id="frameHeight" value="32" min="1">
+        <p id="imageInfo">No image loaded.</p>
+    </section>
+
+    <section>
+        <h2>2. Configure frames</h2>
+
+        <div class="controls">
+            <div class="field">
+                <label>Frame width</label>
+                <input type="number" id="frameWidth" value="32" min="1">
+            </div>
+
+            <div class="field">
+                <label>Frame height</label>
+                <input type="number" id="frameHeight" value="32" min="1">
+            </div>
+
+            <div class="field">
+                <label>Columns</label>
+                <input type="number" id="columns" value="4" min="1">
+            </div>
+
+            <div class="field">
+                <label>Rows</label>
+                <input type="number" id="rows" value="1" min="1">
+            </div>
         </div>
 
-        <div class="field">
-            <label>Columns</label>
-            <input type="number" id="columns" value="4" min="1">
+        <label>
+            <input type="checkbox" id="horizontal" checked>
+            Frames arranged horizontally
+        </label>
+
+        <button id="previewFrames">Preview frames</button>
+
+        <div id="frameList"></div>
+    </section>
+
+    <section>
+        <h2>3. Crop whitespace</h2>
+
+        <p>Remove fully transparent rows and columns around each sprite.</p>
+
+        <label>
+            <input type="checkbox" id="cropTop" checked>
+            Crop top
+        </label>
+
+        <label>
+            <input type="checkbox" id="cropBottom" checked>
+            Crop bottom
+        </label>
+
+        <label>
+            <input type="checkbox" id="cropLeft" checked>
+            Crop left
+        </label>
+
+        <label>
+            <input type="checkbox" id="cropRight" checked>
+            Crop right
+        </label>
+    </section>
+
+    <section>
+        <h2>4. Shared character palette</h2>
+
+        <p>
+            Build your palette from a sprite sheet, then reuse it
+            for every animation. Each color keeps the same letter.
+        </p>
+
+        <label>
+            <input type="checkbox" id="reversePalette">
+            Assign letters in reverse order
+        </label>
+
+        <div class="controls">
+            <button id="buildPalette">Build palette from sprite sheet</button>
+            <button id="addColor">Add color manually</button>
         </div>
 
-        <div class="field">
-            <label>Rows</label>
-            <input type="number" id="rows" value="1" min="1">
+        <p id="paletteStatus"></p>
+
+        <div id="paletteList">
+            <p class="palette-empty">No colors in your palette yet.</p>
         </div>
-    </div>
+    </section>
 
-    <label>
-        <input type="checkbox" id="horizontal" checked>
-        Frames arranged horizontally
-    </label>
+    <section>
+        <h2>5. Animation settings</h2>
 
-    <button id="previewFrames">Preview frames</button>
+        <div class="controls">
+            <div class="field">
+                <label>Animation name</label>
+                <input id="animationName" value="sitting">
+            </div>
 
-    <div id="frameList"></div>
-</section>
-
-<section>
-    <h2>3. Crop whitespace</h2>
-
-    <p>Remove fully transparent rows and columns around each sprite.</p>
-
-    <label>
-        <input type="checkbox" id="cropTop" checked>
-        Crop top
-    </label>
-
-    <label>
-        <input type="checkbox" id="cropBottom" checked>
-        Crop bottom
-    </label>
-
-    <label>
-        <input type="checkbox" id="cropLeft" checked>
-        Crop left
-    </label>
-
-    <label>
-        <input type="checkbox" id="cropRight" checked>
-        Crop right
-    </label>
-</section>
-
-<section>
-    <h2>4. Shared character palette</h2>
-
-    <p>
-        Build your palette from a sprite sheet, then reuse it
-        for every animation. Each color keeps the same letter.
-    </p>
-
-    <label>
-        <input type="checkbox" id="reversePalette">
-        Assign letters in reverse order
-    </label>
-
-    <div class="controls">
-        <button id="buildPalette">Build palette from sprite sheet</button>
-        <button id="addColor">Add color manually</button>
-    </div>
-
-    <p id="paletteStatus"></p>
-
-    <div id="paletteList">
-        <p class="palette-empty">No colors in your palette yet.</p>
-    </div>
-</section>
-
-<section>
-    <h2>5. Animation settings</h2>
-
-    <div class="controls">
-        <div class="field">
-            <label>Animation name</label>
-            <input id="animationName" value="sitting">
+            <div class="field">
+                <label>FPS</label>
+                <input type="number" id="fps" value="4" min="1" max="60">
+            </div>
         </div>
 
-        <div class="field">
-            <label>FPS</label>
-            <input type="number" id="fps" value="4" min="1" max="60">
-        </div>
-    </div>
+        <label>
+            <input type="checkbox" id="loop" checked>
+            Loop animation
+        </label>
 
-    <label>
-        <input type="checkbox" id="loop" checked>
-        Loop animation
-    </label>
+        <button id="addAnimation">Add animation</button>
 
-    <button id="addAnimation">Add animation</button>
+        <p id="animationStatus"></p>
+    </section>
 
-    <p id="animationStatus"></p>
-</section>
+    <section>
+        <h2>6. Export character</h2>
 
-<section>
-    <h2>6. Export character</h2>
+        <div id="animationList"></div>
 
-    <div id="animationList"></div>
+        <button id="export">Generate JavaScript</button>
+        <button id="copy">Copy code</button>
 
-    <button id="export">Generate JavaScript</button>
-    <button id="copy">Copy code</button>
-
-    <textarea id="output" placeholder="Generated character code..."></textarea>
-</section>
+        <textarea id="output" placeholder="Generated character code..."></textarea>
+    </section>
 
 </main>
 

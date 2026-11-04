@@ -1,0 +1,756 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Navigation from "../components/Navigation.astro";
+---
+
+<Layout title="Palette Generator | matikda">
+    <Navigation />
+
+    <main class="generator">
+        <h1>Color Palette Generator</h1>
+        <p>Upload one or more JSON theme files. Each file becomes one theme with separate light and dark modes.</p>
+
+        <section class="upload-section">
+            <label for="json-upload">Upload theme JSON files</label>
+            <input id="json-upload" type="file" accept=".json,application/json" multiple />
+            <p class="help-text">
+                Each JSON file should contain <code>light</code> and <code>dark</code> objects with named hex colors.
+                The filename becomes the initial theme name.
+            </p>
+            <p id="import-status" class="status" aria-live="polite"></p>
+        </section>
+
+        <div class="display-controls">
+            <button type="button" id="toggle-color-displays" aria-expanded="true">
+                Collapse color displays
+            </button>
+        </div>
+
+        <section id="themes" class="themes"></section>
+
+        <section class="output-section">
+            <div class="output-header">
+                <h2>Tailwind color declarations</h2>
+                <button type="button" id="copy-button">Copy code</button>
+            </div>
+            <textarea id="output" class="code-output" readonly spellcheck="false" aria-label="Tailwind color declarations"></textarea>
+            <p id="copy-status" class="status" aria-live="polite"></p>
+        </section>
+
+        <section class="output-section">
+            <div class="output-header">
+                <h2>Theme assignments</h2>
+                <button type="button" id="copy-theme">Copy assignments</button>
+            </div>
+            <textarea id="theme-output" class="code-output" readonly spellcheck="false" aria-label="Theme assignments"></textarea>
+            <p id="theme-copy-status" class="status" aria-live="polite"></p>
+        </section>
+    </main>
+</Layout>
+
+<style>
+    body {
+        overflow: auto;
+    }
+    .generator {
+        width: min(1100px, 100%);
+        margin: 3rem auto;
+        padding: 2rem;
+        box-sizing: border-box;
+    }
+
+    .upload-section {
+        display: grid;
+        gap: 0.65rem;
+        max-width: 620px;
+        margin: 2rem 0;
+        padding: 1.25rem;
+        border: 1px solid var(--theme-text-400);
+        border-radius: 8px;
+    }
+
+    input, button {
+        font: inherit;
+    }
+
+    input[type="file"] {
+        max-width: 100%;
+    }
+
+    button {
+        padding: 0.65rem 1rem;
+        cursor: pointer;
+        border: 1px solid currentColor;
+        border-radius: 5px;
+    }
+
+    .help-text, .status {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .help-text {
+        color: var(--theme-text-600);
+    }
+
+    .display-controls {
+        display: flex;
+        justify-content: flex-end;
+        margin: 1.5rem 0;
+    }
+
+    .themes {
+        display: grid;
+        gap: 3rem;
+    }
+
+    .themes.color-displays-collapsed :global(.palette-meta),
+    .themes.color-displays-collapsed :global(.palette-swatches),
+    .themes.color-displays-collapsed :global(.grid-container),
+    .themes.color-displays-collapsed :global(.palette-section h4) {
+        display: none;
+    }
+
+    .theme-card {
+        min-width: 0;
+        padding: 1.25rem;
+        border: 1px solid var(--theme-text-400);
+        border-radius: 10px;
+    }
+
+    .theme-header, .output-header, .mode-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .theme-header {
+        margin-bottom: 1.5rem;
+    }
+
+    :global(.mode-color-summary) {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 0.4rem;
+        overflow-x: auto;
+        margin-bottom: 0.5rem;
+        padding: 0.15rem 0.1rem 0.35rem;
+    }
+
+    :global(.mode-color-swatch) {
+        flex: 0 0 2rem;
+        width: 2rem;
+        height: 2rem;
+        border: 1px solid var(--theme-text-400);
+        border-radius: 3px;
+    }
+
+    .theme-header h2, .output-header h2, .mode-header h3 {
+        margin: 0;
+    }
+
+    .theme-name-control {
+        display: grid;
+        gap: 0.4rem;
+        width: min(320px, 100%);
+    }
+
+    .theme-name-control input {
+        min-width: 0;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid var(--theme-text-400);
+        border-radius: 5px;
+    }
+
+    .remove-theme {
+        white-space: nowrap;
+    }
+
+    .mode-section {
+        margin-top: 2rem;
+    }
+
+    .mode-header {
+        margin-bottom: 1rem;
+    }
+
+    .mode-header h3 {
+        text-transform: capitalize;
+    }
+
+    .palette-list {
+        display: grid;
+        gap: 2rem;
+    }
+
+    .palette-section h4 {
+        margin: 0 0 0.35rem;
+    }
+
+    .palette-meta {
+        margin: 0 0 0.8rem;
+        color: var(--theme-text-600);
+        font-size: 0.85rem;
+    }
+
+    .palette-swatches {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
+        gap: 0.4rem;
+    }
+
+    .swatch {
+        min-height: 76px;
+        padding: 0.55rem;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow-wrap: anywhere;
+        font-size: 0.78rem;
+    }
+
+    .grid-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .grid-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .grid-item h5 {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .color-grid {
+        display: grid;
+        grid-template-columns: repeat(11, 1fr);
+        width: 150px;
+        aspect-ratio: 1;
+        overflow: hidden;
+        border-radius: 8px;
+    }
+
+    .color-grid-cell {
+        width: 100%;
+        aspect-ratio: 1;
+    }
+
+    .color-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        width: 150px;
+        aspect-ratio: 1;
+        overflow: hidden;
+        border-radius: 8px;
+    }
+
+    .color-grid-cell-2 {
+        width: 100%;
+        height: 100%;
+    }
+
+    .output-section {
+        margin-top: 2.5rem;
+    }
+
+    .output-header {
+        margin-bottom: 0.75rem;
+    }
+
+    .code-output {
+        display: block;
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 120px;
+        max-height: 280px;
+        padding: 1rem;
+        border: 0;
+        border-radius: 8px;
+        overflow: auto;
+        resize: vertical;
+        background: var(--theme-bg-200);
+        color: var(--theme-text-800);
+        font: 0.9rem/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        white-space: pre;
+        tab-size: 4;
+    }
+
+    @media (max-width: 650px) {
+        .generator {
+            padding: 1rem;
+        }
+
+        .theme-header, .output-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    const shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+
+    type RGB = { r: number; g: number; b: number };
+    type Palette = {
+        role: string;
+        baseHex: string;
+        colors: Record<number, string>;
+    };
+    type ThemeMode = {
+        palettes: Palette[];
+    };
+    type ImportedTheme = {
+        id: number;
+        name: string;
+        sourceName: string;
+        light: ThemeMode;
+        dark: ThemeMode;
+    };
+
+    const uploadInput = document.querySelector<HTMLInputElement>("#json-upload")!;
+    const themesElement = document.querySelector<HTMLDivElement>("#themes")!;
+    const importStatus = document.querySelector<HTMLParagraphElement>("#import-status")!;
+    const outputElement = document.querySelector<HTMLTextAreaElement>("#output")!;
+    const themeOutput = document.querySelector<HTMLTextAreaElement>("#theme-output")!;
+    const toggleColorDisplays = document.querySelector<HTMLButtonElement>("#toggle-color-displays")!;
+    const copyButton = document.querySelector<HTMLButtonElement>("#copy-button")!;
+    const copyThemeButton = document.querySelector<HTMLButtonElement>("#copy-theme")!;
+    const copyStatus = document.querySelector<HTMLParagraphElement>("#copy-status")!;
+    const themeCopyStatus = document.querySelector<HTMLParagraphElement>("#theme-copy-status")!;
+
+    let importedThemes: ImportedTheme[] = [];
+    let nextThemeId = 1;
+
+    function hexToRgb(hex: string): RGB {
+        const value = hex.replace("#", "");
+        return {
+            r: parseInt(value.substring(0, 2), 16),
+            g: parseInt(value.substring(2, 4), 16),
+            b: parseInt(value.substring(4, 6), 16)
+        };
+    }
+
+    function rgbToHex(rgb: RGB): string {
+        const toHex = (value: number) =>
+            Math.round(value).toString(16).padStart(2, "0");
+        return "#" + toHex(rgb.r) + toHex(rgb.g) + toHex(rgb.b);
+    }
+
+    function mixColors(base: RGB, target: RGB, amount: number): RGB {
+        return {
+            r: base.r * (1 - amount) + target.r * amount,
+            g: base.g * (1 - amount) + target.g * amount,
+            b: base.b * (1 - amount) + target.b * amount
+        };
+    }
+
+    function getBaseShade(hex: string): number {
+        const rgb = hexToRgb(hex);
+        const brightness =
+            0.299 * rgb.r +
+            0.587 * rgb.g +
+            0.114 * rgb.b;
+
+        if (brightness > 240) return 50;
+        if (brightness > 220) return 100;
+        if (brightness > 195) return 200;
+        if (brightness > 170) return 300;
+        if (brightness > 145) return 400;
+        if (brightness > 115) return 500;
+        if (brightness > 85) return 600;
+        if (brightness > 55) return 700;
+        if (brightness > 30) return 800;
+        if (brightness > 12) return 900;
+        return 950;
+    }
+
+    function generatePalette(hex: string): Record<number, string> {
+        const base = hexToRgb(hex);
+        const colors: Record<number, string> = {};
+        const white = { r: 255, g: 255, b: 255 };
+        const black = { r: 0, g: 0, b: 0 };
+        const baseIndex = shades.indexOf(getBaseShade(hex));
+        const maxLightMix = 0.90;
+        const maxDarkMix = 0.90;
+
+        shades.forEach((shade, index) => {
+            let color: RGB;
+
+            if (index === baseIndex) {
+                color = base;
+            } else if (index < baseIndex) {
+                const distance = (baseIndex - index) / baseIndex;
+                color = mixColors(base, white, distance * maxLightMix);
+            } else {
+                const distance =
+                    (index - baseIndex) / (shades.length - 1 - baseIndex);
+                color = mixColors(base, black, distance * maxDarkMix);
+            }
+
+            colors[shade] = rgbToHex(color);
+        });
+
+        return colors;
+    }
+
+    function cleanName(value: string, fallback: string): string {
+        return value
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9-]+/g, "-")
+            .replace(/^-+|-+$/g, "") || fallback;
+    }
+
+    function isHexColor(value: unknown): value is string {
+        return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
+    }
+
+    function parseMode(modeData: unknown, modeName: string): ThemeMode {
+        if (!modeData || typeof modeData !== "object" || Array.isArray(modeData)) {
+            throw new Error(`The "${modeName}" property must be an object of named hex colors.`);
+        }
+
+        const palettes: Palette[] = [];
+
+        Object.entries(modeData as Record<string, unknown>).forEach(([roleName, value]) => {
+            if (!isHexColor(value)) {
+                throw new Error(`"${modeName}.${roleName}" is not a six-digit hex color.`);
+            }
+
+            const role = cleanName(roleName, "unnamed-role");
+            palettes.push({
+                role,
+                baseHex: value,
+                colors: generatePalette(value)
+            });
+        });
+
+        if (palettes.length === 0) {
+            throw new Error(`The "${modeName}" object does not contain any colors.`);
+        }
+
+        return { palettes };
+    }
+
+    function makeThemeName(filename: string): string {
+        return cleanName(filename.replace(/\.json$/i, ""), "theme");
+    }
+
+    async function importFiles(files: FileList | null) {
+        if (!files || files.length === 0) return;
+
+        let importedCount = 0;
+        const errors: string[] = [];
+
+        for (const file of Array.from(files)) {
+            try {
+                const data: unknown = JSON.parse(await file.text());
+
+                if (!data || typeof data !== "object" || Array.isArray(data)) {
+                    throw new Error("The JSON file must contain an object.");
+                }
+
+                const json = data as Record<string, unknown>;
+                const light = parseMode(json.light, "light");
+                const dark = parseMode(json.dark, "dark");
+
+                const theme: ImportedTheme = {
+                    id: nextThemeId++,
+                    name: makeThemeName(file.name),
+                    sourceName: file.name,
+                    light,
+                    dark
+                };
+
+                importedThemes.push(theme);
+                importedCount++;
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "Unknown import error.";
+                errors.push(`${file.name}: ${message}`);
+            }
+        }
+
+        renderAll();
+
+        if (errors.length) {
+            importStatus.textContent =
+                `${importedCount} theme(s) imported. Some files could not be imported: ${errors.join(" ")}`;
+        } else {
+            importStatus.textContent = `${importedCount} theme(s) imported successfully.`;
+        }
+
+        uploadInput.value = "";
+    }
+
+    function generateColorGrid(container: HTMLDivElement, colors: Record<number, string>) {
+        container.innerHTML = "";
+
+        shades.forEach(rowShade => {
+            shades.forEach(columnShade => {
+                const cell = document.createElement("div");
+                cell.className = "color-grid-cell";
+                cell.style.background =
+                    `linear-gradient(135deg, ${colors[rowShade]} 50%, ${colors[columnShade]} 50%)`;
+                cell.title = `${rowShade} + ${columnShade}`;
+                container.appendChild(cell);
+            });
+        });
+    }
+
+    function generateColorGrid2(container: HTMLDivElement, colors: Record<number, string>) {
+        container.innerHTML = "";
+        const gridShades = [
+            [50, 100, 200, 300, 400],
+            [100, 200, 300, 400, 500],
+            [200, 300, 400, 500, 600],
+            [300, 400, 500, 600, 700],
+            [400, 500, 600, 700, 800]
+        ];
+
+        gridShades.forEach(row => {
+            row.forEach(shade => {
+                const cell = document.createElement("div");
+                cell.className = "color-grid-cell-2";
+                cell.style.backgroundColor = colors[shade];
+                cell.title = String(shade);
+                container.appendChild(cell);
+            });
+        });
+    }
+
+    function renderPalette(palette: Palette, themeName: string, modeName: "light" | "dark", parent: HTMLDivElement) {
+        const section = document.createElement("section");
+        section.className = "palette-section";
+
+        const heading = document.createElement("h4");
+        heading.textContent = palette.role;
+        const meta = document.createElement("p");
+        meta.className = "palette-meta";
+        meta.textContent = `${themeName} / ${modeName} / ${palette.role}`;
+
+        const swatches = document.createElement("div");
+        swatches.className = "palette-swatches";
+
+        shades.forEach(shade => {
+            const color = palette.colors[shade];
+            const rgb = hexToRgb(color);
+            const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
+
+            const swatch = document.createElement("div");
+            swatch.className = "swatch";
+            swatch.style.backgroundColor = color;
+            swatch.style.color = brightness > 150 ? "#111" : "#fff";
+
+            const shadeLabel = document.createElement("strong");
+            shadeLabel.textContent = String(shade);
+
+            const colorLabel = document.createElement("span");
+            colorLabel.textContent = color;
+
+            swatch.append(shadeLabel, colorLabel);
+            swatches.appendChild(swatch);
+        });
+
+        const gridContainer = document.createElement("div");
+        gridContainer.className = "grid-container";
+
+        const gridItem1 = document.createElement("div");
+        gridItem1.className = "grid-item";
+        const gridHeading1 = document.createElement("h5");
+        gridHeading1.textContent = "Color comparison";
+        const grid1 = document.createElement("div");
+        grid1.className = "color-grid";
+        generateColorGrid(grid1, palette.colors);
+        gridItem1.append(gridHeading1, grid1);
+
+        const gridItem2 = document.createElement("div");
+        gridItem2.className = "grid-item";
+        const gridHeading2 = document.createElement("h5");
+        gridHeading2.textContent = "Color pattern";
+        const grid2 = document.createElement("div");
+        grid2.className = "color-grid-2";
+        generateColorGrid2(grid2, palette.colors);
+        gridItem2.append(gridHeading2, grid2);
+
+        gridContainer.append(gridItem1, gridItem2);
+        section.append(heading, meta, swatches, gridContainer);
+        parent.appendChild(section);
+    }
+
+    function renderMode(theme: ImportedTheme, modeName: "light" | "dark", modeData: ThemeMode, card: HTMLDivElement) {
+        const modeSection = document.createElement("section");
+        modeSection.className = "mode-section";
+
+        const modeHeader = document.createElement("div");
+        modeHeader.className = "mode-header";
+
+        const heading = document.createElement("h3");
+        heading.textContent = `${modeName} mode`;
+
+        const count = document.createElement("span");
+        count.className = "palette-meta";
+        count.textContent = `${modeData.palettes.length} color roles`;
+
+        modeHeader.append(heading, count);
+
+        const colorSummary = document.createElement("div");
+        colorSummary.className = "mode-color-summary";
+        colorSummary.setAttribute("role", "group");
+        colorSummary.setAttribute("aria-label", `${modeName} mode colors`);
+
+        modeData.palettes.forEach(palette => {
+            const swatch = document.createElement("span");
+            const description = `${modeName} / ${palette.role}: ${palette.baseHex}`;
+            swatch.className = "mode-color-swatch";
+            swatch.style.backgroundColor = palette.baseHex;
+            swatch.title = description;
+            swatch.setAttribute("role", "img");
+            swatch.setAttribute("aria-label", description);
+            colorSummary.appendChild(swatch);
+        });
+
+        const paletteList = document.createElement("div");
+        paletteList.className = "palette-list";
+
+        modeData.palettes.forEach(palette => {
+            renderPalette(palette, theme.name, modeName, paletteList);
+        });
+
+        modeSection.append(modeHeader, colorSummary, paletteList);
+        card.appendChild(modeSection);
+    }
+
+    function renderTheme(theme: ImportedTheme) {
+        const card = document.createElement("div");
+        card.className = "theme-card";
+
+        const header = document.createElement("div");
+        header.className = "theme-header";
+
+        const nameLabel = document.createElement("label");
+        nameLabel.className = "theme-name-control";
+        nameLabel.textContent = "Theme name";
+
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.value = theme.name;
+        nameInput.setAttribute("aria-label", `Theme name for ${theme.sourceName}`);
+        nameInput.addEventListener("input", () => {
+            theme.name = nameInput.value;
+            renderOutputs();
+        });
+        nameLabel.appendChild(nameInput);
+
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "remove-theme";
+        removeButton.textContent = "Remove theme";
+        removeButton.addEventListener("click", () => {
+            importedThemes = importedThemes.filter(item => item.id !== theme.id);
+            renderAll();
+        });
+
+        header.append(nameLabel, removeButton);
+        card.appendChild(header);
+
+        renderMode(theme, "light", theme.light, card);
+        renderMode(theme, "dark", theme.dark, card);
+
+        return card;
+    }
+
+    function renderOutputs() {
+        const declarationLines: string[] = [];
+        const assignmentBlocks: string[] = [];
+
+        importedThemes.forEach(theme => {
+            const themeName = cleanName(theme.name, "theme");
+
+            declarationLines.push(`    /* ${themeName} begin */`);
+
+            (["light", "dark"] as const).forEach(modeName => {
+                const modeData = theme[modeName];
+
+                modeData.palettes.forEach(palette => {
+                    shades.forEach(shade => {
+                        declarationLines.push(
+                            `    --color-${themeName}-${modeName}-${palette.role}-${shade}: ${palette.colors[shade]};`
+                        );
+                    });
+                });
+
+                const assignments = modeData.palettes.flatMap(palette =>
+                    shades.map(shade =>
+                        `    --theme-${palette.role}-${shade}: var(--color-${themeName}-${modeName}-${palette.role}-${shade});`
+                    )
+                );
+
+                assignmentBlocks.push(
+                    `[data-theme="${themeName}"][data-mode="${modeName}"] {\n${assignments.join("\n")}\n}`
+                );
+            });
+
+            declarationLines.push(`    /* ${themeName} end */`);
+        });
+
+        outputElement.value = declarationLines.length
+            ? `@theme {\n${declarationLines.join("\n")}\n}`
+            : "";
+
+        themeOutput.value = assignmentBlocks.join("\n\n");
+    }
+
+    function renderAll() {
+        themesElement.innerHTML = "";
+        importedThemes.forEach(theme => {
+            themesElement.appendChild(renderTheme(theme));
+        });
+        renderOutputs();
+    }
+
+    async function copyText(value: string, status: HTMLParagraphElement) {
+        if (!value) {
+            status.textContent = "Nothing to copy yet.";
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(value);
+            status.textContent = "Copied!";
+        } catch {
+            status.textContent = "Copy unavailable. Select and copy manually.";
+        }
+    }
+
+    uploadInput.addEventListener("change", () => {
+        importFiles(uploadInput.files);
+    });
+
+    copyButton.addEventListener("click", () =>
+        copyText(outputElement.value, copyStatus)
+    );
+
+    copyThemeButton.addEventListener("click", () =>
+        copyText(themeOutput.value, themeCopyStatus)
+    );
+
+    toggleColorDisplays.addEventListener("click", () => {
+        const isCollapsed = themesElement.classList.toggle("color-displays-collapsed");
+
+        toggleColorDisplays.setAttribute("aria-expanded", String(!isCollapsed));
+
+        toggleColorDisplays.textContent = isCollapsed
+            ? "Expand color displays"
+            : "Collapse color displays";
+    });
+    renderAll();
+</script>

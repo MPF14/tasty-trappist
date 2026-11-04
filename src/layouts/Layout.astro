@@ -1,23 +1,23 @@
+---
+import "../styles/global.css";
+
+const { title = "matikda" } = Astro.props;
+---
+
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body>
-		<slot />
-	</body>
-</html>
+  <head>
+	<script is:inline>
+    const savedTheme = localStorage.getItem("theme") || "april-shower";
+		document.documentElement.setAttribute("data-theme", savedTheme);
+    document.documentElement.setAttribute("data-mode", "light");
+	</script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{title}</title>
+  </head>
 
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
-</style>
+  <body>
+    <slot />
+  </body>
+</html>

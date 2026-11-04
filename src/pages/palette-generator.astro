@@ -1,0 +1,618 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Navigation from "../components/Navigation.astro";
+---
+
+<Layout title="Palette Generator | matikda">
+    <Navigation />
+
+    <main class="generator">
+        <h1>Color Palette Generator</h1>
+        <p>Add colors and assign each one a role in the theme. Each color gets its own 11-shade palette.</p>
+
+        <div class="theme-control">
+            <label for="theme-name">Theme name</label>
+            <input type="text" id="theme-name" value="cool" />
+        </div>
+
+        <div class="section-heading">
+            <h2>Colors</h2>
+            <button type="button" id="add-color">+ Add color</button>
+        </div>
+
+        <div id="color-entries" class="color-entries"></div>
+        <div id="palette" class="generated-palettes"></div>
+
+        <section class="output-section">
+            <div class="output-header">
+                <h2>Tailwind color declarations</h2>
+                <button type="button" id="copy-button">Copy code</button>
+            </div>
+            <pre id="output"></pre>
+            <p id="copy-status" class="status" aria-live="polite"></p>
+        </section>
+
+        <section class="output-section">
+            <div class="output-header">
+                <h2>Theme assignments</h2>
+                <button type="button" id="copy-theme">Copy assignment</button>
+            </div>
+            <pre id="theme-output"></pre>
+            <p id="theme-copy-status" class="status" aria-live="polite"></p>
+        </section>
+    </main>
+</Layout>
+
+<style>
+    body {
+        overflow: auto;
+    }
+
+    .generator {
+        width: min(1100px, 100%);
+        margin: 3rem auto;
+        padding: 2rem;
+        box-sizing: border-box;
+    }
+
+    .theme-control,
+    .color-entry label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+
+    .theme-control {
+        max-width: 320px;
+        margin: 1.5rem 0 2rem;
+    }
+
+    input,
+    button {
+        font: inherit;
+    }
+
+    input {
+        min-width: 0;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid var(--theme-text-400);
+        border-radius: 5px;
+    }
+
+    button {
+        padding: 0.65rem 1rem;
+        cursor: pointer;
+        border: 1px solid currentColor;
+        border-radius: 5px;
+    }
+
+    .section-heading,
+    .output-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .section-heading {
+        margin-bottom: 1rem;
+    }
+
+    .section-heading h2,
+    .output-header h2 {
+        margin: 0;
+    }
+
+    .color-entries {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .color-entry {
+        display: grid;
+        grid-template-columns: minmax(200px, 1fr) minmax(180px, 1fr) auto;
+        align-items: end;
+        gap: 1rem;
+        padding: 1rem;
+        border: 1px solid var(--theme-text-400);
+        border-radius: 8px;
+    }
+
+    .hex-control {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 42px;
+        align-items: end;
+        gap: 0.5rem;
+    }
+
+    .hex-control input[type="color"] {
+        width: 42px;
+        height: 42px;
+        padding: 2px;
+        cursor: pointer;
+    }
+
+    .remove-color {
+        white-space: nowrap;
+    }
+
+    .generated-palettes {
+        display: grid;
+        gap: 2.5rem;
+        margin-top: 2.5rem;
+    }
+
+    .palette-section h3 {
+        margin-bottom: 0.35rem;
+    }
+
+    .palette-meta {
+        margin: 0 0 1rem;
+        color: var(--theme-text-600);
+        font-size: 0.9rem;
+    }
+
+    .palette-swatches {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .swatch {
+        min-height: 90px;
+        padding: 0.65rem;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow-wrap: anywhere;
+        font-size: 0.85rem;
+    }
+
+    .grid-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .grid-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .grid-item h4 {
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .color-grid {
+        display: grid;
+        grid-template-columns: repeat(11, 1fr);
+        width: 150px;
+        aspect-ratio: 1;
+        overflow: hidden;
+        border-radius: 8px;
+    }
+
+    .color-grid-cell {
+        width: 100%;
+        aspect-ratio: 1;
+    }
+
+    .color-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        width: 150px;
+        aspect-ratio: 1;
+        overflow: hidden;
+        border-radius: 8px;
+    }
+
+    .color-grid-cell-2 {
+        width: 100%;
+        height: 100%;
+    }
+        .output-section {
+        margin-top: 2.5rem;
+    }
+
+    .output-header {
+        margin-bottom: 0.75rem;
+    }
+
+    pre {
+        min-height: 2rem;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        background: var(--theme-bg-200);
+        color: var(--theme-text-800);
+        white-space: pre;
+    }
+
+    .status {
+        min-height: 1.2em;
+    }
+
+    @media (max-width: 700px) {
+        .generator {
+            padding: 1rem;
+        }
+
+        .color-entry {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .remove-color {
+            justify-self: start;
+        }
+    }
+
+    @media (max-width: 440px) {
+        .color-entry {
+            grid-template-columns: 1fr;
+        }
+
+        .output-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    const shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+
+    const entriesElement = document.querySelector<HTMLDivElement>("#color-entries")!;
+    const addColorButton = document.querySelector<HTMLButtonElement>("#add-color")!;
+    const themeInput = document.querySelector<HTMLInputElement>("#theme-name")!;
+    const paletteElement = document.querySelector<HTMLDivElement>("#palette")!;
+    const outputElement = document.querySelector<HTMLPreElement>("#output")!;
+    const themeOutput = document.querySelector<HTMLPreElement>("#theme-output")!;
+    const copyButton = document.querySelector<HTMLButtonElement>("#copy-button")!;
+    const copyThemeButton = document.querySelector<HTMLButtonElement>("#copy-theme")!;
+    const copyStatus = document.querySelector<HTMLParagraphElement>("#copy-status")!;
+    const themeCopyStatus = document.querySelector<HTMLParagraphElement>("#theme-copy-status")!;
+
+    type RGB = { r: number; g: number; b: number };
+    type Palette = {
+        hex: string;
+        role: string;
+        colors: Record<number, string>;
+    };
+
+    function hexToRgb(hex: string): RGB {
+        const value = hex.replace("#", "");
+        return {
+            r: parseInt(value.substring(0, 2), 16),
+            g: parseInt(value.substring(2, 4), 16),
+            b: parseInt(value.substring(4, 6), 16)
+        };
+    }
+
+    function rgbToHex(rgb: RGB) {
+        const toHex = (value: number) =>
+            Math.round(value).toString(16).padStart(2, "0");
+        return "#" + toHex(rgb.r) + toHex(rgb.g) + toHex(rgb.b);
+    }
+
+    function mixColors(base: RGB, target: RGB, amount: number): RGB {
+        return {
+            r: base.r * (1 - amount) + target.r * amount,
+            g: base.g * (1 - amount) + target.g * amount,
+            b: base.b * (1 - amount) + target.b * amount
+        };
+    }
+
+    function getBaseShade(hex: string) {
+        const rgb = hexToRgb(hex);
+        const brightness =
+            0.299 * rgb.r +
+            0.587 * rgb.g +
+            0.114 * rgb.b;
+
+        if (brightness > 240) return 50;
+        if (brightness > 220) return 100;
+        if (brightness > 195) return 200;
+        if (brightness > 170) return 300;
+        if (brightness > 145) return 400;
+        if (brightness > 115) return 500;
+        if (brightness > 85) return 600;
+        if (brightness > 55) return 700;
+        if (brightness > 30) return 800;
+        if (brightness > 12) return 900;
+        return 950;
+    }
+
+    function generatePalette(base: RGB, baseIndex: number) {
+        const colors: Record<number, string> = {};
+        const white = { r: 255, g: 255, b: 255 };
+        const black = { r: 0, g: 0, b: 0 };
+        const maxLightMix = 0.90;
+        const maxDarkMix = 0.90;
+
+        shades.forEach((shade, index) => {
+            let color: RGB;
+
+            if (index === baseIndex) {
+                color = base;
+            } else if (index < baseIndex) {
+                const distance = (baseIndex - index) / baseIndex;
+                color = mixColors(base, white, distance * maxLightMix);
+            } else {
+                const distance =
+                    (index - baseIndex) / (shades.length - 1 - baseIndex);
+                color = mixColors(base, black, distance * maxDarkMix);
+            }
+
+            colors[shade] = rgbToHex(color);
+        });
+
+        return colors;
+    }
+
+    function cleanName(value: string, fallback: string) {
+        return value
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9-]+/g, "-")
+            .replace(/^-+|-+$/g, "") || fallback;
+    }
+
+    function addColorEntry(hex = "#193fe6", role = "") {
+        const entry = document.createElement("div");
+        entry.className = "color-entry";
+
+        const hexControl = document.createElement("div");
+        hexControl.className = "hex-control";
+
+        const hexLabel = document.createElement("label");
+        hexLabel.textContent = "Base hex color";
+
+        const hexInput = document.createElement("input");
+        hexInput.type = "text";
+        hexInput.value = hex;
+        hexInput.placeholder = "#193fe6";
+        hexInput.dataset.field = "hex";
+        hexInput.setAttribute("aria-label", "Hex color");
+
+        const colorPicker = document.createElement("input");
+        colorPicker.type = "color";
+        colorPicker.value = hex;
+        colorPicker.dataset.field = "picker";
+        colorPicker.setAttribute("aria-label", "Choose color");
+
+        hexLabel.appendChild(hexInput);
+        hexControl.append(hexLabel, colorPicker);
+
+        const roleLabel = document.createElement("label");
+        roleLabel.textContent = "Theme role";
+
+        const roleInput = document.createElement("input");
+        roleInput.type = "text";
+        roleInput.value = role;
+        roleInput.placeholder = "e.g. primary";
+        roleInput.dataset.field = "role";
+        roleLabel.appendChild(roleInput);
+
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "remove-color";
+        removeButton.textContent = "Remove";
+        removeButton.addEventListener("click", () => {
+            entry.remove();
+            generate();
+        });
+
+        colorPicker.addEventListener("input", () => {
+            hexInput.value = colorPicker.value;
+            generate();
+        });
+
+        hexInput.addEventListener("input", () => {
+            const normalized = hexInput.value.startsWith("#")
+                ? hexInput.value
+                : `#${hexInput.value}`;
+
+            if (/^#[0-9a-fA-F]{6}$/.test(normalized)) {
+                colorPicker.value = normalized;
+            }
+            generate();
+        });
+
+        roleInput.addEventListener("input", generate);
+
+        entry.append(hexControl, roleLabel, removeButton);
+        entriesElement.appendChild(entry);
+        generate();
+    }
+
+    function readPalettes(): Palette[] {
+        const palettes: Palette[] = [];
+        const entries = entriesElement.querySelectorAll<HTMLDivElement>(".color-entry");
+
+        entries.forEach((entry, index) => {
+            const hexInput = entry.querySelector<HTMLInputElement>('[data-field="hex"]')!;
+            const roleInput = entry.querySelector<HTMLInputElement>('[data-field="role"]')!;
+            const hex = hexInput.value.startsWith("#")
+                ? hexInput.value
+                : `#${hexInput.value}`;
+
+            if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+
+            const role = cleanName(roleInput.value, `role-${index + 1}`);
+            const baseShade = getBaseShade(hex);
+            const baseIndex = shades.indexOf(baseShade);
+
+            palettes.push({
+                hex,
+                role,
+                colors: generatePalette(hexToRgb(hex), baseIndex)
+            });
+        });
+
+        return palettes;
+    }
+        function generateColorGrid(container: HTMLDivElement, colors: Record<number, string>) {
+        container.innerHTML = "";
+
+        shades.forEach(rowShade => {
+            shades.forEach(columnShade => {
+                const cell = document.createElement("div");
+                cell.className = "color-grid-cell";
+                cell.style.background = `linear-gradient(135deg, ${colors[rowShade]} 50%, ${colors[columnShade]} 50%)`;
+                cell.title = `${rowShade} + ${columnShade}`;
+                container.appendChild(cell);
+            });
+        });
+    }
+
+    function generateColorGrid2(container: HTMLDivElement, colors: Record<number, string>) {
+        container.innerHTML = "";
+        const gridShades = [
+            [50, 100, 200, 300, 400],
+            [100, 200, 300, 400, 500],
+            [200, 300, 400, 500, 600],
+            [300, 400, 500, 600, 700],
+            [400, 500, 600, 700, 800]
+        ];
+
+        gridShades.forEach(row => {
+            row.forEach(shade => {
+                const cell = document.createElement("div");
+                cell.className = "color-grid-cell-2";
+                cell.style.backgroundColor = colors[shade];
+                cell.title = String(shade);
+                container.appendChild(cell);
+            });
+        });
+    }
+
+    function generate() {
+        const palettes = readPalettes();
+        const theme = cleanName(themeInput.value, "default");
+        paletteElement.innerHTML = "";
+
+        entriesElement.querySelectorAll<HTMLDivElement>(".color-entry").forEach(entry => {
+            const hexInput = entry.querySelector<HTMLInputElement>('[data-field="hex"]')!;
+            const rawHex = hexInput.value.trim();
+            const normalized = rawHex.startsWith("#") ? rawHex : `#${rawHex}`;
+            const valid = /^#[0-9a-fA-F]{6}$/.test(normalized);
+
+            entry.classList.toggle("invalid-entry", rawHex !== "" && !valid);
+            hexInput.setCustomValidity(
+                valid || rawHex === "" ? "" : "Enter a six-digit hex color."
+            );
+        });
+
+        palettes.forEach((palette) => {
+            const section = document.createElement("section");
+            section.className = "palette-section";
+
+            const heading = document.createElement("h3");
+            heading.textContent = `${theme}-${palette.role} — ${palette.hex}`;
+
+            const meta = document.createElement("p");
+            meta.className = "palette-meta";
+            meta.textContent = `Theme role: ${palette.role}`;
+
+            const swatches = document.createElement("div");
+            swatches.className = "palette-swatches";
+
+            shades.forEach((shade) => {
+                const color = palette.colors[shade];
+                const rgb = hexToRgb(color);
+                const brightness =
+                    (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
+
+                const swatch = document.createElement("div");
+                swatch.className = "swatch";
+                swatch.style.backgroundColor = color;
+                swatch.style.color = brightness > 150 ? "#111" : "#fff";
+
+                const shadeLabel = document.createElement("strong");
+                shadeLabel.textContent = String(shade);
+
+                const colorLabel = document.createElement("span");
+                colorLabel.textContent = color;
+
+                swatch.append(shadeLabel, colorLabel);
+                swatches.appendChild(swatch);
+            });
+
+            const gridContainer = document.createElement("div");
+            gridContainer.className = "grid-container";
+
+            const gridItem1 = document.createElement("div");
+            gridItem1.className = "grid-item";
+            const gridHeading1 = document.createElement("h4");
+            gridHeading1.textContent = "Color Comparison";
+            const grid1 = document.createElement("div");
+            grid1.className = "color-grid";
+            generateColorGrid(grid1, palette.colors);
+            gridItem1.append(gridHeading1, grid1);
+
+            const gridItem2 = document.createElement("div");
+            gridItem2.className = "grid-item";
+            const gridHeading2 = document.createElement("h4");
+            gridHeading2.textContent = "Color Pattern";
+            const grid2 = document.createElement("div");
+            grid2.className = "color-grid-2";
+            generateColorGrid2(grid2, palette.colors);
+            gridItem2.append(gridHeading2, grid2);
+
+            gridContainer.append(gridItem1, gridItem2);
+            section.append(heading, meta, swatches, gridContainer);
+            paletteElement.appendChild(section);
+        });
+
+        const paletteLines = palettes.flatMap(palette =>
+            shades.map(shade =>
+                `    --color-${theme}-${palette.role}-${shade}: ${palette.colors[shade]};`
+            )
+        );
+
+        outputElement.textContent = palettes.length
+            ? `@theme {\n${paletteLines.join("\n")}\n}`
+            : "";
+
+        const assignmentLines = palettes.flatMap(palette =>
+            shades.map(shade =>
+                `    --theme-${palette.role}-${shade}: var(--color-${theme}-${palette.role}-${shade});`
+            )
+        );
+
+        themeOutput.textContent = palettes.length
+            ? `[data-theme="${theme}"] {\n${assignmentLines.join("\n")}\n}`
+            : "";
+    }
+
+    async function copyText(value: string, status: HTMLParagraphElement) {
+        try {
+            await navigator.clipboard.writeText(value);
+            status.textContent = "Copied!";
+        } catch {
+            status.textContent = "Copy unavailable. Select and copy manually.";
+        }
+    }
+
+    addColorButton.addEventListener("click", () => {
+        addColorEntry("#193fe6");
+    });
+
+    themeInput.addEventListener("input", generate);
+
+    copyButton.addEventListener("click", () =>
+        copyText(outputElement.textContent ?? "", copyStatus)
+    );
+
+    copyThemeButton.addEventListener("click", () =>
+        copyText(themeOutput.textContent ?? "", themeCopyStatus)
+    );
+
+    addColorEntry("#193fe6", "primary");
+    addColorEntry("#aa63c4", "secondary");
+</script>

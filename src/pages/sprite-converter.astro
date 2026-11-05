@@ -2,13 +2,15 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import Navigation from "../components/Navigation.astro";
+import ThemeOverlay from "../components/ThemeOverlay.astro";
 ---
 
 <Layout title="Palette Generator | matikda">
     <Navigation />
+    <ThemeOverlay />
     <main>
 
-        <h1>Pixel Sprite Converter</h1>
+        <h1 class="mt-[5rem] mb-[.5rem]">Pixel Sprite Converter</h1>
         <p>Convert PNG sprite sheets into JavaScript animations.</p>
 
         <section>
@@ -149,35 +151,26 @@ import Navigation from "../components/Navigation.astro";
 </Layout>
 
 <style>
+    h1 {
+        font-size: 2rem;
+    }
     * {
         box-sizing: border-box;
     }
 
-    body {
-        margin: 0;
-        padding: 0;
-        background: var(--theme-bg-100);
-        color: var(--theme-text-800);
-        font-family: monospace;
-        overflow: auto;
-    }
-
     main {
         max-width: 900px;
-        padding: 20px;
+        padding: 0;
         margin: auto;
     }
 
     section {
-        background: var(--theme-bg-200);
+        background: var(--theme-card-500);
         padding: 20px;
         margin: 20px 0;
-        border: 1px solid var(--theme-text-400);
-        border-radius: 8px;
-    }
+        border: 0;
+        border-radius: 3px;
 
-    h1, h2 {
-        margin-top: 0;
     }
 
     label {
@@ -233,14 +226,6 @@ import Navigation from "../components/Navigation.astro";
     .field {
         display: flex;
         flex-direction: column;
-    }
-
-    textarea {
-        width: 100%;
-        height: 350px;
-        padding: 12px;
-        font: 12px monospace;
-        resize: vertical;
     }
 
     #frameList {

@@ -7,11 +7,18 @@ const { title = "matikda" } = Astro.props;
 <!doctype html>
 <html lang="en">
   <head>
-	<script is:inline>
-    const savedTheme = localStorage.getItem("theme") || "april-shower";
-		document.documentElement.setAttribute("data-theme", savedTheme);
-    document.documentElement.setAttribute("data-mode", "light");
-	</script>
+    <script is:inline>
+      (() => {
+        const savedTheme = localStorage.getItem("theme") || "april-shower";
+        const savedMode = localStorage.getItem("mode") || "light";
+
+		document.documentElement.setAttribute("data-mode", savedMode);
+
+        document.documentElement.dataset.theme = savedTheme;
+        document.documentElement.dataset.mode = savedMode;
+      })();
+    </script>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <title>{title}</title>

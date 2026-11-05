@@ -1,0 +1,137 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Navigation from "../components/Navigation.astro";
+import ThemeOverlay from "../components/ThemeOverlay.astro";
+---
+
+<Layout title="Palette Generator | matikda">
+    <Navigation />
+    <ThemeOverlay />
+
+    <main class="converter">
+        <div>
+            <h1 class="mt-[4rem] mb-[2rem]">CSS Shade Reverser</h1>
+            <p>
+                Paste your CSS variables below to reverse their
+                shade numbers. Color values remain unchanged.
+            </p>
+
+        <h3>Input:</h3>
+        </div> 
+        <textarea
+            id="input"
+            placeholder="Paste your CSS variables here..."
+        ></textarea>
+        <div>
+            <button class="p-2" id="convert">Reverse shade scale</button>
+        </div>
+
+        <div class="output-header">
+            <h3>Output:</h3>
+            <span id="status"></span>
+        </div>
+
+        <textarea
+            id="output"
+            placeholder="Your converted CSS will appear here..."
+            readonly
+        ></textarea>
+        <div>
+            <button class="p-2" id="copy">Copy output</button>
+        </div>
+        
+    </main>
+</Layout>
+
+<style>
+    h1 {
+        font-size: 2rem;
+    }
+    .converter {
+        max-width: 900px;
+        margin: auto;
+    }
+
+    button {
+        padding: 0.7rem 1.2rem;
+        margin: 1rem 0;
+        border: none;
+        border-radius: 3px;
+        background: var(--theme-primary-400);
+        color: var(--theme-textoncolor-200);
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: var(--theme-primary-600);
+    }
+
+    .output-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    #status {
+        font-size: 0.85rem;
+    }
+</style>
+
+<script>
+    const shadeMap: Record<string, number> = {
+        "50": 950,
+        "100": 900,
+        "200": 800,
+        "300": 700,
+        "400": 600,
+        "500": 500,
+        "600": 400,
+        "700": 300,
+        "800": 200,
+        "900": 100,
+        "950": 50,
+    };
+
+    const input = document.getElementById("input") as HTMLTextAreaElement | null;
+    const output = document.getElementById("output") as HTMLTextAreaElement | null;
+    const status = document.getElementById("status");
+    const convertButton = document.getElementById("convert");
+    const copyButton = document.getElementById("copy");
+
+    function reverseShadeScale(css: string) {
+        let count = 0;
+
+        const converted = css.replace(
+            /(--color-[a-zA-Z0-9_-]+-)(50|100|200|300|400|500|600|700|800|900|950)(\s*:)/g,
+            (match, prefix: string, shade: string, colon: string) => {
+                if (!prefix.includes("-dark-")) return match;
+
+                count++;
+                return prefix + (shadeMap[shade] ?? Number(shade)) + colon;
+            }
+        );
+
+        return { converted, count };
+    }
+
+    convertButton?.addEventListener("click", () => {
+        if (!input || !output || !status) {
+            return;
+        }
+
+        const result = reverseShadeScale(input.value);
+
+        output.value = result.converted;
+        status.textContent = `${result.count} variables converted`;
+    });
+
+    copyButton?.addEventListener("click", async () => {
+        if (!output || !status) {
+            return;
+        }
+
+        await navigator.clipboard.writeText(output.value);
+
+        status.textContent = "Copied!";
+    });
+</script>

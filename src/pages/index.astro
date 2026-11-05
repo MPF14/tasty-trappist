@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import Navigation from "../components/Navigation.astro";
 import World from "../components/World.astro";
+import ThemeOverlay from "../components/ThemeOverlay.astro";
 
 
 const themes = [
@@ -26,36 +27,11 @@ const themes = [
   <main>
     <World />
   </main>
-  <select id="theme-selector" aria-label="Select theme">
-            {themes.map((theme) => (
-                <option value={theme.name}>
-                    {theme.label}
-                </option>
-            ))}
-        </select>
-
+  <ThemeOverlay />
 </Layout>
 
 <style>
-    
-    #theme-selector {
-        position: fixed;
-        bottom: 1.5rem;
-        right: 1.5rem;
-        z-index: 1000;
-        box-shadow: 0 0;
-        padding: 0 0;
-        border: 0;
-        color: var(--theme-accent-400);
-        width: auto;
-        appearance: none;
-        -webkit-appearance: none;
-    }
-    #theme-selector:hover {
-        color: var(--theme-accent-600);
-    }
-    #theme-selector:focus {
-        color: var(--theme-accent-600);
-        outline: none;
-    }
+body {
+  overflow: hidden;
+}
 </style>

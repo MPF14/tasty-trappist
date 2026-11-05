@@ -1,10 +1,12 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import Navigation from "../components/Navigation.astro";
+import ThemeOverlay from "../components/ThemeOverlay.astro";
 ---
 
 <Layout title="Palette Generator | matikda">
     <Navigation />
+    <ThemeOverlay />
 
     <main class="generator">
         <h1>Color Palette Generator</h1>
@@ -67,12 +69,8 @@ import Navigation from "../components/Navigation.astro";
         margin: 1.5rem 0 2rem;
     }
 
-    input,
-    button {
-        font: inherit;
-    }
-
     input {
+        font: inherit;
         min-width: 0;
         padding: 0.55rem 0.7rem;
         border: 1px solid var(--theme-text-400);
@@ -80,6 +78,7 @@ import Navigation from "../components/Navigation.astro";
     }
 
     button {
+        font: inherit;
         padding: 0.65rem 1rem;
         cursor: pointer;
         border: 1px solid currentColor;

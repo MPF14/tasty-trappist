@@ -1,0 +1,328 @@
+
+---
+const themes = [
+    { name: "april-shower", label: "april-shower" },
+    { name: "winter", label: "winter" },
+    { name: "spring", label: "spring" },
+    { name: "autumn", label: "autumn" },
+    { name: "summer", label: "summer" },
+    { name: "june", label: "june" },
+    { name: "academia", label: "academia" },
+    { name: "rainy-day", label: "rainy-day" },
+    { name: "library", label: "library" },
+    { name: "flowers", label: "flowers" },
+    { name: "bright", label: "bright" },
+    { name: "roses", label: "roses" },
+    { name: "neutral", label: "neutral" }
+];
+---
+
+<div class="theme-controls" style="visibility: hidden">
+    <div class="theme-dropdown">
+        <button
+            id="theme-trigger"
+            aria-expanded="false"
+            aria-haspopup="listbox"
+        >
+            <span class="dropdown-arrow">⇣</span>
+            <span id="theme-label">april-shower</span>
+        </button>
+
+        <div id="theme-menu" role="listbox" aria-label="Select theme" hidden>
+            {themes.map((theme) => (
+                <button
+                    class="theme-option"
+                    type="button"
+                    role="option"
+                    data-theme={theme.name}
+                    aria-selected="false"
+                >
+                    {theme.label}
+                </button>
+            ))}
+        </div>
+    </div>
+    <button id="mode-toggle" aria-label="Switch to night mode">
+        ☾
+    </button>
+</div>
+
+<style>
+    .theme-controls {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        z-index: 1000;
+
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0 0.5rem;
+        background: var(--theme-card-200);
+        opacity: 0.625;
+        border-radius: 2px;
+    }
+
+    /* Dropdown container */
+    .theme-dropdown {
+        position: relative;
+    }
+
+    /* Dropdown trigger */
+    #theme-trigger {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+
+        padding: 0;
+        border: none;
+        background: transparent;
+
+        color: var(--theme-accent-400);
+        font: inherit;
+        cursor: pointer;
+    }
+
+    #theme-trigger:hover {
+        color: var(--theme-accent-600);
+    }
+
+    .dropdown-arrow {
+        transition: transform 0.2s ease;
+    }
+
+    #theme-trigger[aria-expanded="true"] .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+
+    /* Dropdown menu */
+    #theme-menu {
+        position: absolute;
+        right: 0;
+        bottom: calc(100% + 0.6rem);
+
+        min-width: 11rem;
+        max-height: 50vh;
+        overflow-y: auto;
+
+        padding: 0.35rem;
+        border: 1px solid var(--theme-accent-400);
+        border-radius: 8px;
+
+        background: var(--theme-bg, Canvas);
+        color: var(--theme-text, CanvasText);
+
+        box-shadow: 0 4px 16px rgb(0 0 0 / 15%);
+    }
+
+    #theme-menu[hidden] {
+        display: none;
+    }
+
+    /* Individual options */
+    .theme-option {
+        display: block;
+        width: 100%;
+
+        padding: 0.45rem 0.65rem;
+        border: none;
+        border-radius: 5px;
+
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .theme-option:hover,
+    .theme-option:focus-visible {
+        background: var(--theme-accent-100);
+        color: var(--theme-accent-600);
+        outline: none;
+    }
+
+    .theme-option[aria-selected="true"] {
+        color: var(--theme-accent-600);
+        font-weight: bold;
+    }
+
+    /* Light/dark mode button */
+    #mode-toggle {
+        padding: 0;
+        border: none;
+        background: transparent;
+
+        color: var(--theme-accent-400);
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+
+    #mode-toggle:hover {
+        color: var(--theme-accent-600);
+    }
+</style>
+
+<script>
+    const themeControls = document.querySelector<HTMLDivElement>(
+        ".theme-controls"
+    );
+    const themeTrigger = document.querySelector<HTMLButtonElement>(
+        "#theme-trigger"
+    );
+    const themeMenu = document.querySelector<HTMLDivElement>(
+        "#theme-menu"
+    );
+    const themeLabel = document.querySelector<HTMLSpanElement>(
+        "#theme-label"
+    );
+    const themeOptions = Array.from(
+        document.querySelectorAll<HTMLButtonElement>(".theme-option")
+    );
+    const modeToggle = document.querySelector<HTMLButtonElement>(
+        "#mode-toggle"
+    );
+
+    if (
+        !themeControls ||
+        !themeTrigger ||
+        !themeMenu ||
+        !themeLabel ||
+        !modeToggle
+    ) {
+        throw new Error("Theme controls not found");
+    }
+
+    // Restore saved theme
+    const savedTheme = localStorage.getItem("theme") || "april-shower";
+
+    function selectTheme(theme: string) {
+        const selectedOption = themeOptions.find(
+            (option) => option.dataset.theme === theme
+        );
+
+        if (!selectedOption) return;
+
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem("theme", theme);
+
+        themeLabel!.textContent = selectedOption.textContent?.trim() || theme;
+
+        themeOptions.forEach((option) => {
+            option.setAttribute(
+                "aria-selected",
+                String(option === selectedOption)
+            );
+        });
+    }
+
+    selectTheme(savedTheme);
+
+    // Open and close dropdown
+    function openMenu() {
+        themeMenu!.hidden = false;
+        themeTrigger!.setAttribute("aria-expanded", "true");
+    }
+
+    function closeMenu() {
+        themeMenu!.hidden = true;
+        themeTrigger!.setAttribute("aria-expanded", "false");
+    }
+
+    themeTrigger!.addEventListener("click", () => {
+        if (themeMenu!.hidden) {
+            openMenu();
+        } else {
+            closeMenu();
+        }
+    });
+
+    // Select a theme
+    themeOptions.forEach((option) => {
+        option.addEventListener("click", () => {
+            const theme = option.dataset.theme;
+            if (!theme) return;
+
+            selectTheme(theme);
+            closeMenu();
+            themeTrigger.focus();
+        });
+    });
+
+    // Close when clicking outside
+    document.addEventListener("click", (event) => {
+        if (!themeControls.contains(event.target as Node)) {
+            closeMenu();
+        }
+    });
+
+    // Keyboard controls
+    themeTrigger.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            openMenu();
+
+            const selectedIndex = themeOptions.findIndex(
+                (option) => option.getAttribute("aria-selected") === "true"
+            );
+
+            const nextIndex = event.key === "ArrowDown"
+                ? Math.min(selectedIndex + 1, themeOptions.length - 1)
+                : Math.max(selectedIndex - 1, 0);
+
+            themeOptions[nextIndex]?.focus();
+        }
+    });
+
+    themeMenu.addEventListener("keydown", (event) => {
+        const currentIndex = themeOptions.indexOf(
+            document.activeElement as HTMLButtonElement
+        );
+
+        if (event.key === "Escape") {
+            event.preventDefault();
+            closeMenu();
+            themeTrigger.focus();
+        } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+
+            const direction = event.key === "ArrowDown" ? 1 : -1;
+            const nextIndex = Math.max(
+                0,
+                Math.min(currentIndex + direction, themeOptions.length - 1)
+            );
+
+            themeOptions[nextIndex]?.focus();
+        }
+    });
+
+    // Restore saved light/dark mode
+    const savedMode = localStorage.getItem("mode") || "light";
+    const modeToggleButton = modeToggle;
+    document.documentElement.dataset.mode = savedMode;
+
+    function updateModeButton() {
+        const isDark = document.documentElement.dataset.mode === "dark";
+
+        modeToggleButton.textContent = isDark ? "☀" : "☾";
+        modeToggleButton.setAttribute(
+            "aria-label",
+            isDark ? "Switch to day mode" : "Switch to night mode"
+        );
+    }
+
+    updateModeButton();
+
+    modeToggleButton.addEventListener("click", () => {
+        const currentMode = document.documentElement.dataset.mode;
+        const newMode = currentMode === "dark" ? "light" : "dark";
+
+        document.documentElement.dataset.mode = newMode;
+        localStorage.setItem("mode", newMode);
+
+        updateModeButton();
+    });
+
+    // Reveal controls after restoring saved settings
+    themeControls.style.visibility = "visible";
+</script>

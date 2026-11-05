@@ -24,14 +24,103 @@ const { title = "matikda" } = Astro.props;
     <title>{title}</title>
 
 	<link
-	rel="icon"
-	type="image/svg+xml"
-	href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23f2c66d' d='M7 1h2v3h3v2h3v5h-3v3H4v-3H1V6h3V4h3z'/%3E%3C/svg%3E"
+		id="dynamic-favicon"
+		rel="icon"
+		type="image/svg+xml"
 	/>
-
   </head>
 
   <body>
     <slot />
+	<script>
+		const favicon = document.querySelector<HTMLLinkElement>("#dynamic-favicon");
+		const paths = [
+			"M0 0h1v1H0z",
+			"M1 0h1v1H1z",
+			"M0 1h1v1H0z",
+			"M2 0h1v1H2z",
+			"M1 1h1v1H1z",
+			"M0 2h1v1H0z",
+			"M3 0h1v1H3z",
+			"M2 1h1v1H2z",
+			"M1 2h1v1H1z",
+			"M0 3h1v1H0z",
+			"M4 0h1v1H4z",
+			"M3 1h1v1H3z",
+			"M2 2h1v1H2z",
+			"M1 3h1v1H1z",
+			"M0 4h1v1H0z",
+			"M4 1h1v1H4z",
+			"M3 2h1v1H3z",
+			"M2 3h1v1H2z",
+			"M1 4h1v1H1z",
+			"M4 2h1v1H4z",
+			"M3 3h1v1H3z",
+			"M2 4h1v1H2z",
+			"M4 3h1v1H4z",
+			"M3 4h1v1H3z",
+			"M4 4h1v1H4z"
+		];
+
+		const colorVariables = [
+			"--theme-primary-100",
+			"--theme-secondary-200",
+			"--theme-secondary-200",
+			"--theme-accent-300",
+			"--theme-primary-300",
+			"--theme-accent-300",
+			"--theme-good-400",
+			"--theme-secondary-400",
+			"--theme-secondary-400",
+			"--theme-good-400",
+			"--theme-bad-500",
+			"--theme-accent-500",
+			"--theme-primary-500",
+			"--theme-accent-500",
+			"--theme-bad-500",
+			"--theme-good-600",
+			"--theme-secondary-600",
+			"--theme-secondary-600",
+			"--theme-good-600",
+			"--theme-accent-700",
+			"--theme-primary-700",
+			"--theme-accent-700",
+			"--theme-secondary-800",
+			"--theme-secondary-800",
+			"--theme-primary-900"
+		];
+
+		function updateFavicon() {
+			if (!favicon) return;
+
+			const styles = getComputedStyle(document.documentElement);
+
+			const colors = colorVariables.map(variable =>
+				styles.getPropertyValue(variable).trim()
+			);
+
+			const svg = `
+				<svg xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 5 5"
+					shape-rendering="crispEdges">
+					${paths.map((path, i) =>
+						`<path fill="${colors[i] || "#888888"}" d="${path}"/>`
+					).join("")}
+				</svg>
+			`;
+
+			favicon.href = "data:image/svg+xml," + encodeURIComponent(svg);
+		}
+
+		// Initial update
+		updateFavicon();
+
+		// Watch for theme and mode changes
+		const observer = new MutationObserver(updateFavicon);
+
+		observer.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ["data-theme", "data-mode"]
+		});</script>
   </body>
 </html>

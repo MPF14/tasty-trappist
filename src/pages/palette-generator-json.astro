@@ -10,7 +10,10 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
 
     <main class="generator">
         <h1>Color Palette Generator</h1>
-        <p>Upload one or more JSON theme files. Each file becomes one theme with separate light and dark modes.</p>
+        <p>
+            Build themes by hand or upload JSON theme files. Each theme has separate light and dark modes,
+            and every color gets its own 11-shade palette.
+        </p>
 
         <section class="upload-section">
             <label for="json-upload">Upload theme JSON files</label>
@@ -23,6 +26,7 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         </section>
 
         <div class="display-controls">
+            <button type="button" id="add-theme">+ Add theme</button>
             <button type="button" id="toggle-color-displays" aria-expanded="true">
                 Collapse color displays
             </button>
@@ -50,10 +54,12 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
     </main>
 </Layout>
 
-<style>
+<!-- Global + prefixed with .generator so it applies to script-created elements without leaking out -->
+<style is:global>
     body {
         overflow: auto;
     }
+
     .generator {
         width: min(1100px, 100%);
         margin: 3rem auto;
@@ -61,7 +67,30 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         box-sizing: border-box;
     }
 
-    .upload-section {
+    .generator input,
+    .generator button {
+        font: inherit;
+    }
+
+    .generator input[type="text"] {
+        min-width: 0;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid var(--theme-text-400);
+        border-radius: 5px;
+    }
+
+    .generator input[type="file"] {
+        max-width: 100%;
+    }
+
+    .generator button {
+        padding: 0.65rem 1rem;
+        cursor: pointer;
+        border: 1px solid currentColor;
+        border-radius: 5px;
+    }
+
+    .generator .upload-section {
         display: grid;
         gap: 0.65rem;
         max-width: 620px;
@@ -71,67 +100,156 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         border-radius: 8px;
     }
 
-    input, button {
-        font: inherit;
-    }
-
-    input[type="file"] {
-        max-width: 100%;
-    }
-
-    button {
-        padding: 0.65rem 1rem;
-        cursor: pointer;
-        border: 1px solid currentColor;
-        border-radius: 5px;
-    }
-
-    .help-text, .status {
+    .generator .help-text,
+    .generator .status {
         margin: 0;
         font-size: 0.9rem;
     }
 
-    .help-text {
+    .generator .status {
+        min-height: 1.2em;
+    }
+
+    .generator .help-text {
         color: var(--theme-text-600);
     }
 
-    .display-controls {
+    .generator .display-controls {
         display: flex;
-        justify-content: flex-end;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
         margin: 1.5rem 0;
     }
 
-    .themes {
+    .generator .themes {
         display: grid;
         gap: 3rem;
     }
 
-    .themes.color-displays-collapsed :global(.palette-meta),
-    .themes.color-displays-collapsed :global(.palette-swatches),
-    .themes.color-displays-collapsed :global(.grid-container),
-    .themes.color-displays-collapsed :global(.palette-section h4) {
+   /* Collapsed: keep only the theme name, the mode labels, and the color summary rows */
+    .generator .themes.color-displays-collapsed .remove-theme,
+    .generator .themes.color-displays-collapsed .mode-header .palette-meta,
+    .generator .themes.color-displays-collapsed .add-color,
+    .generator .themes.color-displays-collapsed .color-entries,
+    .generator .themes.color-displays-collapsed .palette-list {
         display: none;
     }
 
-    .theme-card {
+    .generator .themes.color-displays-collapsed .theme-header {
+        margin-bottom: 0;
+    }
+
+    .generator .themes.color-displays-collapsed .mode-section {
+        margin-top: 1rem;
+    }
+
+    .generator .themes.color-displays-collapsed .mode-header {
+        margin-bottom: 0.4rem;
+    }
+
+    .generator .empty-state {
+        color: var(--theme-text-600);
+    }
+
+    .generator .theme-card {
         min-width: 0;
         padding: 1.25rem;
         border: 1px solid var(--theme-text-400);
         border-radius: 10px;
     }
 
-    .theme-header, .output-header, .mode-header {
+    .generator .theme-header,
+    .generator .output-header,
+    .generator .mode-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 1rem;
     }
 
-    .theme-header {
+    .generator .theme-header {
         margin-bottom: 1.5rem;
     }
 
-    :global(.mode-color-summary) {
+    .generator .theme-header h2,
+    .generator .output-header h2,
+    .generator .mode-header h3 {
+        margin: 0;
+    }
+
+    .generator .theme-name-control,
+    .generator .color-entry label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+
+    .generator .theme-name-control {
+        width: min(320px, 100%);
+    }
+
+    .generator .remove-theme,
+    .generator .remove-color {
+        white-space: nowrap;
+    }
+
+    /* Mode sections */
+    .generator .mode-section {
+        margin-top: 2rem;
+    }
+
+    .generator .mode-header {
+        margin-bottom: 1rem;
+    }
+
+    .generator .mode-header h3 {
+        text-transform: capitalize;
+    }
+
+    .generator .mode-header-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    /* Manual color entry rows */
+    .generator .color-entries {
+        display: grid;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .generator .color-entry {
+        display: grid;
+        grid-template-columns: minmax(200px, 1fr) minmax(180px, 1fr) auto;
+        align-items: end;
+        gap: 1rem;
+        padding: 1rem;
+        border: 1px solid var(--theme-text-400);
+        border-radius: 8px;
+    }
+
+    .generator .color-entry.invalid-entry input[data-field="hex"] {
+        border-color: #d33;
+    }
+
+    .generator .hex-control {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 42px;
+        align-items: end;
+        gap: 0.5rem;
+    }
+
+    .generator .hex-control input[type="color"] {
+        width: 42px;
+        height: 42px;
+        padding: 2px;
+        cursor: pointer;
+    }
+
+    /* Summary strip */
+    .generator .mode-color-summary {
         display: flex;
         flex-wrap: nowrap;
         gap: 0.4rem;
@@ -140,7 +258,7 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         padding: 0.15rem 0.1rem 0.35rem;
     }
 
-    :global(.mode-color-swatch) {
+    .generator .mode-color-swatch {
         flex: 0 0 2rem;
         width: 2rem;
         height: 2rem;
@@ -148,61 +266,29 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         border-radius: 3px;
     }
 
-    .theme-header h2, .output-header h2, .mode-header h3 {
-        margin: 0;
-    }
-
-    .theme-name-control {
-        display: grid;
-        gap: 0.4rem;
-        width: min(320px, 100%);
-    }
-
-    .theme-name-control input {
-        min-width: 0;
-        padding: 0.55rem 0.7rem;
-        border: 1px solid var(--theme-text-400);
-        border-radius: 5px;
-    }
-
-    .remove-theme {
-        white-space: nowrap;
-    }
-
-    .mode-section {
-        margin-top: 2rem;
-    }
-
-    .mode-header {
-        margin-bottom: 1rem;
-    }
-
-    .mode-header h3 {
-        text-transform: capitalize;
-    }
-
-    .palette-list {
+    /* Palettes */
+    .generator .palette-list {
         display: grid;
         gap: 2rem;
     }
 
-    .palette-section h4 {
+    .generator .palette-section h4 {
         margin: 0 0 0.35rem;
     }
 
-    .palette-meta {
+    .generator .palette-meta {
         margin: 0 0 0.8rem;
         color: var(--theme-text-600);
         font-size: 0.85rem;
     }
 
-    .palette-swatches {
+    .generator .palette-swatches {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
         gap: 0.4rem;
     }
 
-    .swatch {
+    .generator .swatch {
         min-height: 76px;
         padding: 0.55rem;
         border-radius: 6px;
@@ -213,7 +299,7 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         font-size: 0.78rem;
     }
 
-    .grid-container {
+    .generator .grid-container {
         display: flex;
         flex-wrap: wrap;
         align-items: flex-start;
@@ -221,18 +307,18 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         margin-top: 1rem;
     }
 
-    .grid-item {
+    .generator .grid-item {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
     }
 
-    .grid-item h5 {
+    .generator .grid-item h5 {
         margin: 0;
         font-size: 0.9rem;
     }
 
-    .color-grid {
+    .generator .color-grid {
         display: grid;
         grid-template-columns: repeat(11, 1fr);
         width: 150px;
@@ -241,12 +327,12 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         border-radius: 8px;
     }
 
-    .color-grid-cell {
+    .generator .color-grid-cell {
         width: 100%;
         aspect-ratio: 1;
     }
 
-    .color-grid-2 {
+    .generator .color-grid-2 {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
         width: 150px;
@@ -255,20 +341,21 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         border-radius: 8px;
     }
 
-    .color-grid-cell-2 {
+    .generator .color-grid-cell-2 {
         width: 100%;
         height: 100%;
     }
 
-    .output-section {
+    /* Outputs */
+    .generator .output-section {
         margin-top: 2.5rem;
     }
 
-    .output-header {
+    .generator .output-header {
         margin-bottom: 0.75rem;
     }
 
-    .code-output {
+    .generator .code-output {
         display: block;
         box-sizing: border-box;
         width: 100%;
@@ -286,14 +373,31 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         tab-size: 4;
     }
 
-    @media (max-width: 650px) {
+    @media (max-width: 700px) {
         .generator {
             padding: 1rem;
         }
 
-        .theme-header, .output-header {
+        .generator .color-entry {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .generator .remove-color {
+            justify-self: start;
+        }
+    }
+
+    @media (max-width: 650px) {
+        .generator .theme-header,
+        .generator .output-header {
             align-items: flex-start;
             flex-direction: column;
+        }
+    }
+
+    @media (max-width: 440px) {
+        .generator .color-entry {
+            grid-template-columns: 1fr;
         }
     }
 </style>
@@ -302,35 +406,45 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
     const shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
 
     type RGB = { r: number; g: number; b: number };
+    type ColorEntry = {
+        id: number;
+        role: string;
+        hex: string;
+    };
+    type ThemeMode = {
+        entries: ColorEntry[];
+    };
     type Palette = {
         role: string;
         baseHex: string;
         colors: Record<number, string>;
     };
-    type ThemeMode = {
-        palettes: Palette[];
-    };
-    type ImportedTheme = {
+    type Theme = {
         id: number;
         name: string;
         sourceName: string;
         light: ThemeMode;
         dark: ThemeMode;
     };
+    type ModeName = "light" | "dark";
 
     const uploadInput = document.querySelector<HTMLInputElement>("#json-upload")!;
     const themesElement = document.querySelector<HTMLDivElement>("#themes")!;
     const importStatus = document.querySelector<HTMLParagraphElement>("#import-status")!;
     const outputElement = document.querySelector<HTMLTextAreaElement>("#output")!;
     const themeOutput = document.querySelector<HTMLTextAreaElement>("#theme-output")!;
+    const addThemeButton = document.querySelector<HTMLButtonElement>("#add-theme")!;
     const toggleColorDisplays = document.querySelector<HTMLButtonElement>("#toggle-color-displays")!;
     const copyButton = document.querySelector<HTMLButtonElement>("#copy-button")!;
     const copyThemeButton = document.querySelector<HTMLButtonElement>("#copy-theme")!;
     const copyStatus = document.querySelector<HTMLParagraphElement>("#copy-status")!;
     const themeCopyStatus = document.querySelector<HTMLParagraphElement>("#theme-copy-status")!;
 
-    let importedThemes: ImportedTheme[] = [];
+    let themes: Theme[] = [];
     let nextThemeId = 1;
+    let nextEntryId = 1;
+
+    /* ---------- Color math ---------- */
 
     function hexToRgb(hex: string): RGB {
         const value = hex.replace("#", "");
@@ -357,10 +471,7 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
 
     function getBaseShade(hex: string): number {
         const rgb = hexToRgb(hex);
-        const brightness =
-            0.299 * rgb.r +
-            0.587 * rgb.g +
-            0.114 * rgb.b;
+        const brightness = 0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b;
 
         if (brightness > 240) return 50;
         if (brightness > 220) return 100;
@@ -381,8 +492,8 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         const white = { r: 255, g: 255, b: 255 };
         const black = { r: 0, g: 0, b: 0 };
         const baseIndex = shades.indexOf(getBaseShade(hex));
-        const maxLightMix = 0.90;
-        const maxDarkMix = 0.90;
+        const maxLightMix = 0.9;
+        const maxDarkMix = 0.9;
 
         shades.forEach((shade, index) => {
             let color: RGB;
@@ -393,8 +504,7 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
                 const distance = (baseIndex - index) / baseIndex;
                 color = mixColors(base, white, distance * maxLightMix);
             } else {
-                const distance =
-                    (index - baseIndex) / (shades.length - 1 - baseIndex);
+                const distance = (index - baseIndex) / (shades.length - 1 - baseIndex);
                 color = mixColors(base, black, distance * maxDarkMix);
             }
 
@@ -403,48 +513,90 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
 
         return colors;
     }
+    /** Mirror shade numbers: 50 gets the 950 color, 100 gets the 900 color, etc. */
+    function reversePalette(colors: Record<number, string>): Record<number, string> {
+        const reversed: Record<number, string> = {};
+        shades.forEach((shade, index) => {
+            reversed[shade] = colors[shades[shades.length - 1 - index]];
+        });
+        return reversed;
+    }
+
+    /* ---------- Helpers ---------- */
 
     function cleanName(value: string, fallback: string): string {
-        return value
-            .trim()
-            .toLowerCase()
-            .replace(/[^a-z0-9-]+/g, "-")
-            .replace(/^-+|-+$/g, "") || fallback;
+        return (
+            value
+                .trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9-]+/g, "-")
+                .replace(/^-+|-+$/g, "") || fallback
+        );
+    }
+
+    function normalizeHex(value: string): string {
+        const trimmed = value.trim();
+        return trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+    }
+
+    function isValidHex(value: string): boolean {
+        return /^#[0-9a-fA-F]{6}$/.test(value);
     }
 
     function isHexColor(value: unknown): value is string {
-        return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
+        return typeof value === "string" && isValidHex(value);
     }
+
+    function makeThemeName(filename: string): string {
+        return cleanName(filename.replace(/\.json$/i, ""), "theme");
+    }
+
+    function newEntry(hex = "#193fe6", role = ""): ColorEntry {
+        return { id: nextEntryId++, hex, role };
+    }
+
+    /** Turn a mode's raw entries into palettes, skipping invalid hex values. */
+    /** Turn a mode's raw entries into palettes, skipping invalid hex values. */
+    function readPalettes(mode: ThemeMode, modeName: ModeName): Palette[] {
+        const palettes: Palette[] = [];
+
+        mode.entries.forEach((entry, index) => {
+            const hex = normalizeHex(entry.hex);
+            if (!isValidHex(hex)) return;
+
+            const generated = generatePalette(hex);
+
+            palettes.push({
+                role: cleanName(entry.role, `role-${index + 1}`),
+                baseHex: hex,
+                colors: modeName === "dark" ? reversePalette(generated) : generated
+            });
+        });
+
+        return palettes;
+    }
+
+    /* ---------- JSON import ---------- */
 
     function parseMode(modeData: unknown, modeName: string): ThemeMode {
         if (!modeData || typeof modeData !== "object" || Array.isArray(modeData)) {
             throw new Error(`The "${modeName}" property must be an object of named hex colors.`);
         }
 
-        const palettes: Palette[] = [];
+        const entries: ColorEntry[] = [];
 
         Object.entries(modeData as Record<string, unknown>).forEach(([roleName, value]) => {
             if (!isHexColor(value)) {
                 throw new Error(`"${modeName}.${roleName}" is not a six-digit hex color.`);
             }
-
-            const role = cleanName(roleName, "unnamed-role");
-            palettes.push({
-                role,
-                baseHex: value,
-                colors: generatePalette(value)
-            });
+            entries.push(newEntry(value, roleName));
         });
 
-        if (palettes.length === 0) {
+        if (entries.length === 0) {
             throw new Error(`The "${modeName}" object does not contain any colors.`);
         }
 
-        return { palettes };
-    }
-
-    function makeThemeName(filename: string): string {
-        return cleanName(filename.replace(/\.json$/i, ""), "theme");
+        return { entries };
     }
 
     async function importFiles(files: FileList | null) {
@@ -465,15 +617,13 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
                 const light = parseMode(json.light, "light");
                 const dark = parseMode(json.dark, "dark");
 
-                const theme: ImportedTheme = {
+                themes.push({
                     id: nextThemeId++,
                     name: makeThemeName(file.name),
                     sourceName: file.name,
                     light,
                     dark
-                };
-
-                importedThemes.push(theme);
+                });
                 importedCount++;
             } catch (error) {
                 const message = error instanceof Error ? error.message : "Unknown import error.";
@@ -483,15 +633,14 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
 
         renderAll();
 
-        if (errors.length) {
-            importStatus.textContent =
-                `${importedCount} theme(s) imported. Some files could not be imported: ${errors.join(" ")}`;
-        } else {
-            importStatus.textContent = `${importedCount} theme(s) imported successfully.`;
-        }
+        importStatus.textContent = errors.length
+            ? `${importedCount} theme(s) imported. Some files could not be imported: ${errors.join(" ")}`
+            : `${importedCount} theme(s) imported successfully.`;
 
         uploadInput.value = "";
     }
+
+    /* ---------- Color grids ---------- */
 
     function generateColorGrid(container: HTMLDivElement, colors: Record<number, string>) {
         container.innerHTML = "";
@@ -529,15 +678,18 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         });
     }
 
-    function renderPalette(palette: Palette, themeName: string, modeName: "light" | "dark", parent: HTMLDivElement) {
+    /* ---------- Rendering: generated palettes ---------- */
+
+    function renderPalette(palette: Palette, themeName: string, modeName: ModeName, parent: HTMLElement) {
         const section = document.createElement("section");
         section.className = "palette-section";
 
         const heading = document.createElement("h4");
-        heading.textContent = palette.role;
+        heading.textContent = `${palette.role} — ${palette.baseHex}`;
+
         const meta = document.createElement("p");
         meta.className = "palette-meta";
-        meta.textContent = `${themeName} / ${modeName} / ${palette.role}`;
+        meta.textContent = `${cleanName(themeName, "theme")} / ${modeName} / ${palette.role}`;
 
         const swatches = document.createElement("div");
         swatches.className = "palette-swatches";
@@ -588,50 +740,175 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         parent.appendChild(section);
     }
 
-    function renderMode(theme: ImportedTheme, modeName: "light" | "dark", modeData: ThemeMode, card: HTMLDivElement) {
+    /* ---------- Rendering: editable entry rows ---------- */
+
+    function createEntryRow(entry: ColorEntry, mode: ThemeMode, onChange: () => void): HTMLDivElement {
+        const row = document.createElement("div");
+        row.className = "color-entry";
+
+        const hexControl = document.createElement("div");
+        hexControl.className = "hex-control";
+
+        const hexLabel = document.createElement("label");
+        hexLabel.textContent = "Base hex color";
+
+        const hexInput = document.createElement("input");
+        hexInput.type = "text";
+        hexInput.value = entry.hex;
+        hexInput.placeholder = "#193fe6";
+        hexInput.dataset.field = "hex";
+        hexInput.setAttribute("aria-label", "Hex color");
+
+        const colorPicker = document.createElement("input");
+        colorPicker.type = "color";
+        colorPicker.value = isValidHex(normalizeHex(entry.hex)) ? normalizeHex(entry.hex).toLowerCase() : "#000000";
+        colorPicker.dataset.field = "picker";
+        colorPicker.setAttribute("aria-label", "Choose color");
+
+        hexLabel.appendChild(hexInput);
+        hexControl.append(hexLabel, colorPicker);
+
+        const roleLabel = document.createElement("label");
+        roleLabel.textContent = "Theme role";
+
+        const roleInput = document.createElement("input");
+        roleInput.type = "text";
+        roleInput.value = entry.role;
+        roleInput.placeholder = "e.g. primary";
+        roleInput.dataset.field = "role";
+        roleLabel.appendChild(roleInput);
+
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "remove-color";
+        removeButton.textContent = "Remove";
+
+        function validate() {
+            const raw = hexInput.value.trim();
+            const valid = isValidHex(normalizeHex(raw));
+            row.classList.toggle("invalid-entry", raw !== "" && !valid);
+            hexInput.setCustomValidity(valid || raw === "" ? "" : "Enter a six-digit hex color.");
+        }
+
+        removeButton.addEventListener("click", () => {
+            const index = mode.entries.findIndex(item => item.id === entry.id);
+            if (index !== -1) mode.entries.splice(index, 1);
+            row.remove();
+            onChange();
+        });
+
+        colorPicker.addEventListener("input", () => {
+            hexInput.value = colorPicker.value;
+            entry.hex = colorPicker.value;
+            validate();
+            onChange();
+        });
+
+        hexInput.addEventListener("input", () => {
+            entry.hex = hexInput.value;
+            const normalized = normalizeHex(hexInput.value);
+            if (isValidHex(normalized)) {
+                colorPicker.value = normalized.toLowerCase();
+            }
+            validate();
+            onChange();
+        });
+
+        roleInput.addEventListener("input", () => {
+            entry.role = roleInput.value;
+            onChange();
+        });
+
+        row.append(hexControl, roleLabel, removeButton);
+        validate();
+        return row;
+    }
+
+    /* ---------- Rendering: modes and themes ---------- */
+
+    function renderMode(theme: Theme, modeName: ModeName) {
+        const mode = theme[modeName];
+
         const modeSection = document.createElement("section");
         modeSection.className = "mode-section";
 
         const modeHeader = document.createElement("div");
         modeHeader.className = "mode-header";
 
+        const headerInfo = document.createElement("div");
+        headerInfo.className = "mode-header-info";
+
         const heading = document.createElement("h3");
         heading.textContent = `${modeName} mode`;
 
         const count = document.createElement("span");
         count.className = "palette-meta";
-        count.textContent = `${modeData.palettes.length} color roles`;
+        count.style.margin = "0";
 
-        modeHeader.append(heading, count);
+        headerInfo.append(heading, count);
+
+        const addColorButton = document.createElement("button");
+        addColorButton.type = "button";
+        addColorButton.className = "add-color";
+        addColorButton.textContent = "+ Add color";
+
+        modeHeader.append(headerInfo, addColorButton);
+
+        const entriesElement = document.createElement("div");
+        entriesElement.className = "color-entries";
 
         const colorSummary = document.createElement("div");
         colorSummary.className = "mode-color-summary";
         colorSummary.setAttribute("role", "group");
         colorSummary.setAttribute("aria-label", `${modeName} mode colors`);
 
-        modeData.palettes.forEach(palette => {
-            const swatch = document.createElement("span");
-            const description = `${modeName} / ${palette.role}: ${palette.baseHex}`;
-            swatch.className = "mode-color-swatch";
-            swatch.style.backgroundColor = palette.baseHex;
-            swatch.title = description;
-            swatch.setAttribute("role", "img");
-            swatch.setAttribute("aria-label", description);
-            colorSummary.appendChild(swatch);
-        });
-
         const paletteList = document.createElement("div");
         paletteList.className = "palette-list";
 
-        modeData.palettes.forEach(palette => {
-            renderPalette(palette, theme.name, modeName, paletteList);
+        /** Re-render only the generated displays (never the inputs, so focus is kept). */
+        function refresh() {
+            const palettes = readPalettes(mode, modeName);
+            count.textContent = `${palettes.length} color role${palettes.length === 1 ? "" : "s"}`;
+
+            colorSummary.innerHTML = "";
+            palettes.forEach(palette => {
+                const swatch = document.createElement("span");
+                const description = `${modeName} / ${palette.role}: ${palette.baseHex}`;
+                swatch.className = "mode-color-swatch";
+                swatch.style.backgroundColor = palette.baseHex;
+                swatch.title = description;
+                swatch.setAttribute("role", "img");
+                swatch.setAttribute("aria-label", description);
+                colorSummary.appendChild(swatch);
+            });
+
+            paletteList.innerHTML = "";
+            palettes.forEach(palette => renderPalette(palette, theme.name, modeName, paletteList));
+        }
+
+        function onChange() {
+            refresh();
+            renderOutputs();
+        }
+
+        mode.entries.forEach(entry => {
+            entriesElement.appendChild(createEntryRow(entry, mode, onChange));
         });
 
-        modeSection.append(modeHeader, colorSummary, paletteList);
-        card.appendChild(modeSection);
+        addColorButton.addEventListener("click", () => {
+            const entry = newEntry("#193fe6", "");
+            mode.entries.push(entry);
+            entriesElement.appendChild(createEntryRow(entry, mode, onChange));
+            onChange();
+        });
+
+        modeSection.append(modeHeader, entriesElement, colorSummary, paletteList);
+        refresh();
+
+        return { element: modeSection, refresh };
     }
 
-    function renderTheme(theme: ImportedTheme) {
+    function renderTheme(theme: Theme): HTMLDivElement {
         const card = document.createElement("div");
         card.className = "theme-card";
 
@@ -645,11 +922,10 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         const nameInput = document.createElement("input");
         nameInput.type = "text";
         nameInput.value = theme.name;
-        nameInput.setAttribute("aria-label", `Theme name for ${theme.sourceName}`);
-        nameInput.addEventListener("input", () => {
-            theme.name = nameInput.value;
-            renderOutputs();
-        });
+        nameInput.setAttribute(
+            "aria-label",
+            theme.sourceName ? `Theme name for ${theme.sourceName}` : "Theme name"
+        );
         nameLabel.appendChild(nameInput);
 
         const removeButton = document.createElement("button");
@@ -657,16 +933,24 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         removeButton.className = "remove-theme";
         removeButton.textContent = "Remove theme";
         removeButton.addEventListener("click", () => {
-            importedThemes = importedThemes.filter(item => item.id !== theme.id);
+            themes = themes.filter(item => item.id !== theme.id);
             renderAll();
         });
 
         header.append(nameLabel, removeButton);
         card.appendChild(header);
 
-        renderMode(theme, "light", theme.light, card);
-        renderMode(theme, "dark", theme.dark, card);
+        const light = renderMode(theme, "light");
+        const dark = renderMode(theme, "dark");
 
+        nameInput.addEventListener("input", () => {
+            theme.name = nameInput.value;
+            light.refresh();
+            dark.refresh();
+            renderOutputs();
+        });
+
+        card.append(light.element, dark.element);
         return card;
     }
 
@@ -674,23 +958,23 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         const declarationLines: string[] = [];
         const assignmentBlocks: string[] = [];
 
-        importedThemes.forEach(theme => {
+        themes.forEach(theme => {
             const themeName = cleanName(theme.name, "theme");
-
-            declarationLines.push(`    /* ${themeName} begin */`);
+            const themeLines: string[] = [];
 
             (["light", "dark"] as const).forEach(modeName => {
-                const modeData = theme[modeName];
+                const palettes = readPalettes(theme[modeName], modeName);
+                if (palettes.length === 0) return;
 
-                modeData.palettes.forEach(palette => {
+                palettes.forEach(palette => {
                     shades.forEach(shade => {
-                        declarationLines.push(
+                        themeLines.push(
                             `    --color-${themeName}-${modeName}-${palette.role}-${shade}: ${palette.colors[shade]};`
                         );
                     });
                 });
 
-                const assignments = modeData.palettes.flatMap(palette =>
+                const assignments = palettes.flatMap(palette =>
                     shades.map(shade =>
                         `    --theme-${palette.role}-${shade}: var(--color-${themeName}-${modeName}-${palette.role}-${shade});`
                     )
@@ -701,7 +985,9 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
                 );
             });
 
-            declarationLines.push(`    /* ${themeName} end */`);
+            if (themeLines.length) {
+                declarationLines.push(`    /* ${themeName} begin */`, ...themeLines, `    /* ${themeName} end */`);
+            }
         });
 
         outputElement.value = declarationLines.length
@@ -711,13 +997,39 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         themeOutput.value = assignmentBlocks.join("\n\n");
     }
 
+    /** Full rebuild — only used when themes are added, removed, or imported. */
     function renderAll() {
         themesElement.innerHTML = "";
-        importedThemes.forEach(theme => {
-            themesElement.appendChild(renderTheme(theme));
-        });
+
+        if (themes.length === 0) {
+            const empty = document.createElement("p");
+            empty.className = "empty-state";
+            empty.textContent = "No themes yet. Add a theme or upload a JSON file to get started.";
+            themesElement.appendChild(empty);
+        }
+
+        themes.forEach(theme => themesElement.appendChild(renderTheme(theme)));
         renderOutputs();
     }
+
+    /* ---------- Theme creation ---------- */
+
+    function addTheme() {
+        let n = themes.length + 1;
+        while (themes.some(t => t.name === `theme-${n}`)) n++;
+
+        themes.push({
+            id: nextThemeId++,
+            name: `theme-${n}`,
+            sourceName: "",
+            light: { entries: [newEntry("#193fe6", "primary"), newEntry("#aa63c4", "secondary")] },
+            dark: { entries: [newEntry("#6b86ff", "primary"), newEntry("#c98ae0", "secondary")] }
+        });
+
+        renderAll();
+    }
+
+    /* ---------- Copy ---------- */
 
     async function copyText(value: string, status: HTMLParagraphElement) {
         if (!value) {
@@ -733,26 +1045,34 @@ import ThemeOverlay from "../components/ThemeOverlay.astro";
         }
     }
 
+    /* ---------- Events ---------- */
+
     uploadInput.addEventListener("change", () => {
         importFiles(uploadInput.files);
     });
 
-    copyButton.addEventListener("click", () =>
-        copyText(outputElement.value, copyStatus)
-    );
+    addThemeButton.addEventListener("click", addTheme);
 
-    copyThemeButton.addEventListener("click", () =>
-        copyText(themeOutput.value, themeCopyStatus)
-    );
+    copyButton.addEventListener("click", () => copyText(outputElement.value, copyStatus));
+
+    copyThemeButton.addEventListener("click", () => copyText(themeOutput.value, themeCopyStatus));
 
     toggleColorDisplays.addEventListener("click", () => {
         const isCollapsed = themesElement.classList.toggle("color-displays-collapsed");
 
         toggleColorDisplays.setAttribute("aria-expanded", String(!isCollapsed));
-
         toggleColorDisplays.textContent = isCollapsed
             ? "Expand color displays"
             : "Collapse color displays";
+    });
+
+    /* ---------- Init: start with one sample theme ---------- */
+    themes.push({
+        id: nextThemeId++,
+        name: "cool",
+        sourceName: "",
+        light: { entries: [newEntry("#193fe6", "primary"), newEntry("#aa63c4", "secondary")] },
+        dark: { entries: [newEntry("#6b86ff", "primary"), newEntry("#c98ae0", "secondary")] }
     });
     renderAll();
 </script>

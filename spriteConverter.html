@@ -1,0 +1,985 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Sprite Converter</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        padding: 30px;
+        background: #e9e3d8;
+        color: #37313d;
+        font-family: monospace;
+    }
+
+    main {
+        max-width: 900px;
+        margin: auto;
+    }
+
+    section {
+        background: #f8f5ef;
+        padding: 20px;
+        margin: 20px 0;
+        border: 1px solid #c9c1b5;
+        border-radius: 8px;
+    }
+
+    h1, h2 {
+        margin-top: 0;
+    }
+
+    label {
+        display: block;
+        margin: 12px 0 5px;
+    }
+
+    input, select, button {
+        padding: 9px;
+        font: inherit;
+        margin: 0px;
+    }
+
+    input[type="number"] {
+        width: 90px;
+    }
+
+    button {
+        cursor: pointer;
+        background: #37313d;
+        color: white;
+        border: none;
+        border-radius: 4px;
+    }
+
+    button:hover {
+        background: #65566e;
+    }
+
+    .preview {
+        overflow: auto;
+        max-width: 100%;
+    }
+
+    canvas {
+        image-rendering: pixelated;
+        background-color: #d4cec3;
+        background-image:
+            linear-gradient(45deg, #bbb3a7 25%, transparent 25%),
+            linear-gradient(-45deg, #bbb3a7 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #bbb3a7 75%),
+            linear-gradient(-45deg, transparent 75%, #bbb3a7 75%);
+        background-size: 16px 16px;
+        background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    }
+
+    .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+    }
+
+    textarea {
+        width: 100%;
+        height: 350px;
+        padding: 12px;
+        font: 12px monospace;
+        resize: vertical;
+    }
+
+    #frameList {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 15px;
+        margin-bottom: 0px;
+    }
+
+    .frame {
+        border: 2px solid transparent;
+        padding: 4px;
+        cursor: pointer;
+    }
+
+    .frame.active {
+        border-color: #a16caa;
+    }
+
+    .frame canvas {
+        display: block;
+        width: 80px;
+        height: 80px;
+    }
+
+    .palette-entry {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px;
+        margin: 6px 0;
+        background: #eee9e1;
+        border-radius: 4px;
+    }
+
+    .palette-entry input[type="text"] {
+        width: 55px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .palette-entry input[type="color"] {
+        width: 55px;
+        height: 38px;
+        padding: 2px;
+        cursor: pointer;
+    }
+
+    .palette-entry .hex-label {
+        min-width: 80px;
+    }
+
+    .palette-entry button {
+        margin-left: auto;
+    }
+
+    .palette-empty {
+        color: #766e77;
+        padding: 10px 0;
+    }
+
+    small {
+        color: #766e77;
+    }
+</style>
+</head>
+
+<body>
+<main>
+
+    <h1>Pixel Sprite Converter</h1>
+    <p>Convert PNG sprite sheets into JavaScript animations.</p>
+
+    <section>
+        <h2>1. Import sprite sheet</h2>
+
+        <input type="file" id="upload" accept="image/png">
+
+        <div class="preview">
+            <canvas id="sheetPreview"></canvas>
+        </div>
+
+        <p id="imageInfo">No image loaded.</p>
+    </section>
+
+    <section>
+        <h2>2. Configure frames</h2>
+
+        <div class="controls">
+            <div class="field">
+                <label>Frame width</label>
+                <input type="number" id="frameWidth" value="32" min="1">
+            </div>
+
+            <div class="field">
+                <label>Frame height</label>
+                <input type="number" id="frameHeight" value="32" min="1">
+            </div>
+
+            <div class="field">
+                <label>Columns</label>
+                <input type="number" id="columns" value="4" min="1">
+            </div>
+
+            <div class="field">
+                <label>Rows</label>
+                <input type="number" id="rows" value="1" min="1">
+            </div>
+        </div>
+
+        <label>
+            <input type="checkbox" id="horizontal" checked>
+            Frames arranged horizontally
+        </label>
+
+        <button id="previewFrames">Preview frames</button>
+
+        <div id="frameList"></div>
+    </section>
+
+    <section>
+        <h2>3. Crop whitespace</h2>
+
+        <p>Remove fully transparent rows and columns around each sprite.</p>
+
+        <label>
+            <input type="checkbox" id="cropTop" checked>
+            Crop top
+        </label>
+
+        <label>
+            <input type="checkbox" id="cropBottom" checked>
+            Crop bottom
+        </label>
+
+        <label>
+            <input type="checkbox" id="cropLeft" checked>
+            Crop left
+        </label>
+
+        <label>
+            <input type="checkbox" id="cropRight" checked>
+            Crop right
+        </label>
+    </section>
+
+    <section>
+        <h2>4. Shared character palette</h2>
+
+        <p>
+            Build your palette from a sprite sheet, then reuse it
+            for every animation. Each color keeps the same letter.
+        </p>
+
+        <label>
+            <input type="checkbox" id="reversePalette">
+            Assign letters in reverse order
+        </label>
+
+        <div class="controls">
+            <button id="buildPalette">Build palette from sprite sheet</button>
+            <button id="addColor">Add color manually</button>
+        </div>
+
+        <p id="paletteStatus"></p>
+
+        <div id="paletteList">
+            <p class="palette-empty">No colors in your palette yet.</p>
+        </div>
+    </section>
+
+    <section>
+        <h2>5. Animation settings</h2>
+
+        <div class="controls">
+            <div class="field">
+                <label>Animation name</label>
+                <input id="animationName" value="sitting">
+            </div>
+
+            <div class="field">
+                <label>FPS</label>
+                <input type="number" id="fps" value="4" min="1" max="60">
+            </div>
+        </div>
+
+        <label>
+            <input type="checkbox" id="loop" checked>
+            Loop animation
+        </label>
+
+        <button id="addAnimation">Add animation</button>
+
+        <p id="animationStatus"></p>
+    </section>
+
+    <section>
+        <h2>6. Export character</h2>
+
+        <div id="animationList"></div>
+
+        <button id="export">Generate JavaScript</button>
+        <button id="copy">Copy code</button>
+
+        <textarea id="output" placeholder="Generated character code..."></textarea>
+    </section>
+
+</main>
+
+<script>
+const upload = document.getElementById("upload");
+const sheetPreview = document.getElementById("sheetPreview");
+const ctx = sheetPreview.getContext("2d", {
+    willReadFrequently: true
+});
+
+const frameList = document.getElementById("frameList");
+const output = document.getElementById("output");
+
+const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+// Current image and frames
+let image = null;
+let extractedFrames = [];
+let selectedFrames = [];
+
+// All animations share this one palette.
+// Format: { A: "#ffffff", B: "#333333" }
+let palette = {};
+
+// Animations store their original pixel data.
+// They are converted into letters only during export.
+let animations = {};
+
+
+// --------------------------------------------------
+// IMPORT IMAGE
+// --------------------------------------------------
+
+upload.addEventListener("change", () => {
+    const file = upload.files[0];
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+        image = img;
+
+        sheetPreview.width = img.naturalWidth;
+        sheetPreview.height = img.naturalHeight;
+
+        ctx.clearRect(0, 0, sheetPreview.width, sheetPreview.height);
+        ctx.drawImage(img, 0, 0);
+
+        document.getElementById("imageInfo").textContent =
+            `${img.naturalWidth} × ${img.naturalHeight} pixels`;
+
+        URL.revokeObjectURL(url);
+        previewFrames();
+    };
+
+    img.onerror = () => {
+        URL.revokeObjectURL(url);
+        alert("Could not load image.");
+    };
+
+    img.src = url;
+});
+
+
+// --------------------------------------------------
+// EXTRACT FRAMES
+// --------------------------------------------------
+
+function previewFrames() {
+    if (!image) return;
+
+    const fw = Number(document.getElementById("frameWidth").value);
+    const fh = Number(document.getElementById("frameHeight").value);
+    const cols = Number(document.getElementById("columns").value);
+    const rows = Number(document.getElementById("rows").value);
+    const horizontal = document.getElementById("horizontal").checked;
+
+    if (!fw || !fh || !cols || !rows) return;
+
+    if (cols * fw > image.naturalWidth ||
+        rows * fh > image.naturalHeight) {
+        alert("The frame grid exceeds the image dimensions.");
+        return;
+    }
+
+    extractedFrames = [];
+    selectedFrames = [];
+    frameList.innerHTML = "";
+
+    const positions = [];
+
+    if (horizontal) {
+        for (let row = 0; row < rows; row++) {
+            for (let col = 0; col < cols; col++) {
+                positions.push({ x: col * fw, y: row * fh });
+            }
+        }
+    } else {
+        for (let col = 0; col < cols; col++) {
+            for (let row = 0; row < rows; row++) {
+                positions.push({ x: col * fw, y: row * fh });
+            }
+        }
+    }
+
+    const frameCanvas = document.createElement("canvas");
+    const frameCtx = frameCanvas.getContext("2d", {
+        willReadFrequently: true
+    });
+    frameCanvas.width = fw;
+    frameCanvas.height = fh;
+
+    for (const position of positions) {
+        frameCtx.clearRect(0, 0, fw, fh);
+
+        frameCtx.drawImage(
+            image,
+            position.x, position.y, fw, fh,
+            0, 0, fw, fh
+        );
+
+        const pixels = frameCtx.getImageData(0, 0, fw, fh);
+
+        const frame = {
+            width: fw,
+            height: fh,
+            pixels
+        };
+
+        extractedFrames.push(frame);
+
+        const index = extractedFrames.length - 1;
+
+        // Frames are selected by default.
+        selectedFrames.push(index);
+
+        const button = document.createElement("button");
+        button.className = "frame active";
+        button.type = "button";
+
+        const thumb = document.createElement("canvas");
+        thumb.width = fw;
+        thumb.height = fh;
+        thumb.style.width = "80px";
+        thumb.style.height = "80px";
+
+        thumb.getContext("2d").putImageData(pixels, 0, 0);
+
+        button.appendChild(thumb);
+        button.appendChild(
+            document.createTextNode(`Frame ${index + 1}`)
+        );
+
+        button.addEventListener("click", () => {
+            if (selectedFrames.includes(index)) {
+                selectedFrames = selectedFrames.filter(i => i !== index);
+                button.classList.remove("active");
+            } else {
+                selectedFrames.push(index);
+                button.classList.add("active");
+            }
+        });
+
+        frameList.appendChild(button);
+    }
+}
+
+document.getElementById("previewFrames")
+    .addEventListener("click", previewFrames);
+
+
+// --------------------------------------------------
+// PALETTE MANAGEMENT
+// --------------------------------------------------
+
+function getNextPaletteLetter() {
+    const reverse = document.getElementById("reversePalette").checked;
+
+    const available = reverse
+        ? [...characters].reverse()
+        : [...characters];
+
+    return available.find(letter => !(letter in palette));
+}
+
+
+function renderPalette() {
+    const list = document.getElementById("paletteList");
+    list.innerHTML = "";
+
+    const entries = Object.entries(palette);
+
+    if (!entries.length) {
+        list.innerHTML =
+            '<p class="palette-empty">No colors in your palette yet.</p>';
+        return;
+    }
+
+    for (const [key, hex] of entries) {
+        const row = document.createElement("div");
+        row.className = "palette-entry";
+
+        const letter = document.createElement("input");
+        letter.type = "text";
+        letter.maxLength = 1;
+        letter.value = key;
+        letter.title = "Palette letter";
+
+        const color = document.createElement("input");
+        color.type = "color";
+        color.value = hex;
+        color.title = "Change color";
+
+        const hexLabel = document.createElement("span");
+        hexLabel.className = "hex-label";
+        hexLabel.textContent = hex;
+
+        const remove = document.createElement("button");
+        remove.textContent = "Remove";
+
+        // Change the letter assigned to this color.
+        letter.addEventListener("change", () => {
+            const newKey = letter.value;
+
+            if (
+                newKey.length !== 1 ||
+                !characters.includes(newKey) ||
+                newKey === "." ||
+                (newKey !== key && newKey in palette)
+            ) {
+                alert("Choose one unused letter from A-Z, a-z, or 0-9.");
+                renderPalette();
+                return;
+            }
+
+            const newPalette = {};
+
+            for (const [oldKey, oldHex] of Object.entries(palette)) {
+                newPalette[oldKey === key ? newKey : oldKey] = oldHex;
+            }
+
+            palette = newPalette;
+            renderPalette();
+        });
+
+        // Change the color assigned to this letter.
+        color.addEventListener("change", () => {
+            const newHex = color.value.toLowerCase();
+
+            const duplicate = Object.entries(palette).some(
+                ([otherKey, otherHex]) =>
+                    otherKey !== key && otherHex === newHex
+            );
+
+            if (duplicate) {
+                alert("That color is already in your palette.");
+                renderPalette();
+                return;
+            }
+
+            palette[key] = newHex;
+            renderPalette();
+        });
+
+        remove.addEventListener("click", () => {
+            delete palette[key];
+            renderPalette();
+        });
+
+        row.append(letter, color, hexLabel, remove);
+        list.appendChild(row);
+    }
+}
+
+
+// Automatically detect colors from the current sprite sheet.
+document.getElementById("buildPalette")
+    .addEventListener("click", () => {
+
+    if (!extractedFrames.length) {
+        alert("Import a sprite sheet and preview its frames first.");
+        return;
+    }
+
+    const existingColors = new Set(Object.values(palette));
+    const discoveredColors = new Set();
+
+    for (const frame of extractedFrames) {
+        const data = frame.pixels.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const alpha = data[i + 3];
+
+            if (alpha < 128) continue;
+
+            const hex = "#" + [data[i], data[i + 1], data[i + 2]]
+                .map(v => v.toString(16).padStart(2, "0"))
+                .join("");
+
+            if (!existingColors.has(hex)) {
+                discoveredColors.add(hex);
+            }
+        }
+    }
+
+    let added = 0;
+
+    for (const hex of discoveredColors) {
+        const letter = getNextPaletteLetter();
+
+        if (!letter) {
+            alert("Your palette has reached its 62-color limit.");
+            break;
+        }
+
+        palette[letter] = hex;
+        added++;
+    }
+
+    renderPalette();
+
+    document.getElementById("paletteStatus").textContent =
+        `Found ${discoveredColors.size} new colors. Added ${added} to your shared palette.`;
+});
+
+
+// Add a color manually.
+document.getElementById("addColor")
+    .addEventListener("click", () => {
+
+    const letter = getNextPaletteLetter();
+
+    if (!letter) {
+        alert("Your palette has reached its 62-color limit.");
+        return;
+    }
+
+    palette[letter] = "#ffffff";
+    renderPalette();
+
+    document.getElementById("paletteStatus").textContent =
+        `Added color ${letter}. Choose its color using the color picker.`;
+});
+
+
+function cropAnimation(frames) {
+    if (!frames.length) return frames;
+
+    const width = frames[0].width;
+    const height = frames[0].height;
+
+    const cropTop = document.getElementById("cropTop").checked;
+    const cropBottom = document.getElementById("cropBottom").checked;
+    const cropLeft = document.getElementById("cropLeft").checked;
+    const cropRight = document.getElementById("cropRight").checked;
+
+    // Find the occupied boundaries across ALL frames.
+    let minX = width;
+    let minY = height;
+    let maxX = -1;
+    let maxY = -1;
+
+    for (const frame of frames) {
+        const data = frame.pixels.data;
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const i = (y * width + x) * 4;
+
+                if (data[i + 3] < 128) continue;
+
+                minX = Math.min(minX, x);
+                minY = Math.min(minY, y);
+                maxX = Math.max(maxX, x);
+                maxY = Math.max(maxY, y);
+            }
+        }
+    }
+
+    // If every frame is empty, return them unchanged.
+    if (maxX === -1) return frames;
+
+    // Calculate one shared crop boundary.
+    const left = cropLeft ? minX : 0;
+    const top = cropTop ? minY : 0;
+    const right = cropRight ? maxX + 1 : width;
+    const bottom = cropBottom ? maxY + 1 : height;
+
+    const newWidth = right - left;
+    const newHeight = bottom - top;
+
+    // Apply identical dimensions and offsets to every frame.
+    return frames.map(frame => {
+        const croppedPixels = new ImageData(newWidth, newHeight);
+
+        for (let y = 0; y < newHeight; y++) {
+            for (let x = 0; x < newWidth; x++) {
+                const sourceIndex =
+                    ((y + top) * width + (x + left)) * 4;
+
+                const targetIndex =
+                    (y * newWidth + x) * 4;
+
+                for (let channel = 0; channel < 4; channel++) {
+                    croppedPixels.data[targetIndex + channel] =
+                        frame.pixels.data[sourceIndex + channel];
+                }
+            }
+        }
+
+        return {
+            width: newWidth,
+            height: newHeight,
+            pixels: croppedPixels
+        };
+    });
+}
+
+
+
+// --------------------------------------------------
+// CONVERT FRAME USING THE SHARED PALETTE
+// --------------------------------------------------
+
+function convertFrame(frame) {
+    const { width, height, data } = frame.pixels;
+
+    // Reverse lookup: color hex -> palette letter.
+    const colorMap = {};
+
+    for (const [key, hex] of Object.entries(palette)) {
+        const normalized = hex.toLowerCase();
+
+        if (normalized in colorMap) {
+            throw new Error(`Duplicate palette color: ${normalized}`);
+        }
+
+        colorMap[normalized] = key;
+    }
+
+    const rows = [];
+
+    for (let y = 0; y < height; y++) {
+        let line = "";
+
+        for (let x = 0; x < width; x++) {
+            const i = (y * width + x) * 4;
+
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const a = data[i + 3];
+
+            // Transparent pixels become dots.
+            if (a < 128) {
+                line += ".";
+                continue;
+            }
+
+            const hex = "#" + [r, g, b]
+                .map(v => v.toString(16).padStart(2, "0"))
+                .join("");
+
+            if (!(hex in colorMap)) {
+                throw new Error(
+                    `Color ${hex} is missing from your palette. ` +
+                    `Build your palette or add this color manually.`
+                );
+            }
+
+            line += colorMap[hex];
+        }
+
+        rows.push(line);
+    }
+
+    return rows;
+}
+
+
+// --------------------------------------------------
+// ADD ANIMATION
+// --------------------------------------------------
+
+document.getElementById("addAnimation")
+    .addEventListener("click", () => {
+
+    const name = document.getElementById("animationName").value.trim();
+    const fps = Number(document.getElementById("fps").value);
+    const loop = document.getElementById("loop").checked;
+
+    if (
+        !/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(name) ||
+        name === "colors" ||
+        !selectedFrames.length ||
+        fps <= 0 ||
+        fps > 60
+    ) {
+        alert("Enter a valid animation name, FPS, and select frames.");
+        return;
+    }
+
+    if (name in animations && !confirm(
+        `Replace the existing "${name}" animation?`
+    )) {
+        return;
+    }
+
+    try {
+        // Check that every selected frame matches the shared palette.
+        for (const index of selectedFrames) {
+            convertFrame(extractedFrames[index]);
+        }
+
+        // Keep original pixel data so palette edits remain possible.
+        const frames = selectedFrames.map(
+            index => extractedFrames[index]
+        );
+
+        animations[name] = {
+            frames,
+            fps,
+            loop
+        };
+
+        document.getElementById("animationStatus").textContent =
+            `Added ${name}: ${frames.length} frames at ${fps} FPS.`;
+
+        renderAnimationList();
+
+    } catch (error) {
+        alert(error.message);
+    }
+});
+
+
+// --------------------------------------------------
+// ANIMATION LIST
+// --------------------------------------------------
+
+function renderAnimationList() {
+    const list = document.getElementById("animationList");
+    list.innerHTML = "";
+
+    Object.entries(animations).forEach(([name, animation]) => {
+        const item = document.createElement("p");
+
+        item.textContent =
+            `${name}: ${animation.frames.length} frames, ` +
+            `${animation.fps} FPS, ${animation.loop ? "loop" : "once"} `;
+
+        const remove = document.createElement("button");
+        remove.textContent = "Remove";
+
+        remove.addEventListener("click", () => {
+            delete animations[name];
+            renderAnimationList();
+        });
+
+        item.appendChild(remove);
+        list.appendChild(item);
+    });
+}
+
+
+// --------------------------------------------------
+// EXPORT JAVASCRIPT
+// --------------------------------------------------
+
+
+function createExport() {
+    if (!Object.keys(animations).length) {
+        throw new Error("Add at least one animation.");
+    }
+
+    if (!Object.keys(palette).length) {
+        throw new Error("Your shared palette is empty.");
+    }
+
+    let result = "";
+
+    const identifiers = new Set(["colors"]);
+
+    // Validate animation and generated frame names.
+    for (const [name, animation] of Object.entries(animations)) {
+        if (identifiers.has(name)) {
+            throw new Error(`Duplicate JavaScript name: ${name}`);
+        }
+
+        identifiers.add(name);
+
+        for (let i = 0; i < animation.frames.length; i++) {
+            const frameName = `${name}${i + 1}`;
+
+            if (identifiers.has(frameName)) {
+                throw new Error(`Duplicate JavaScript name: ${frameName}`);
+            }
+
+            identifiers.add(frameName);
+        }
+    }
+
+    // Export each animation.
+    for (const [name, animation] of Object.entries(animations)) {
+        const frameNames = [];
+
+        // Crop the animation ONCE, using shared dimensions
+        // across all frames in that animation.
+        const croppedFrames = cropAnimation(animation.frames);
+
+        // Export each cropped frame as its own constant.
+        croppedFrames.forEach((frame, index) => {
+            const frameName = `${name}${index + 1}`;
+            frameNames.push(frameName);
+
+            const rows = convertFrame(frame);
+
+            result += `const ${frameName} = [\n`;
+            result += rows
+                .map(row => `    "${row}"`)
+                .join(",\n");
+            result += "\n];\n\n";
+        });
+
+        // Export animation metadata.
+        result += `const ${name} = {\n`;
+        result += `    frames: [${frameNames.join(", ")}],\n`;
+        result += `    fps: ${animation.fps},\n`;
+        result += `    loop: ${animation.loop}\n`;
+        result += "};\n\n";
+    }
+
+    // Export the shared character palette.
+    result += "const colors = {\n";
+
+    result += Object.entries(palette)
+        .map(([key, hex]) => `    ${key}: "${hex}"`)
+        .join(",\n");
+
+    result += "\n};";
+
+    return result;
+}
+
+
+
+document.getElementById("export")
+    .addEventListener("click", () => {
+
+    try {
+        output.value = createExport();
+    } catch (error) {
+        alert(error.message);
+    }
+});
+
+
+// --------------------------------------------------
+// COPY CODE
+// --------------------------------------------------
+
+document.getElementById("copy")
+    .addEventListener("click", async () => {
+
+    if (!output.value) return;
+
+    try {
+        await navigator.clipboard.writeText(output.value);
+        alert("Copied!");
+    } catch (error) {
+        alert("Could not copy. Try selecting the output manually.");
+    }
+});
+
+</script>
+</body>
+</html>
